@@ -1,7 +1,7 @@
 <h1 align="center">Code Runner</h1>
 
 <br>
-## Open source GPT-powered REPL
+<h2>Open source GPT-powered REPL</h2>
 
 Code Runner is a LLM-powered REPL that runs on your machine, allowing the
 language model to run code directly on your computer.
