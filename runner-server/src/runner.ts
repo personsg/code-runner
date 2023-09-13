@@ -2,17 +2,24 @@ import { ChatCompletionMessageParam } from 'openai/resources/chat'
 import Execute from './repl'
 import { DATA_PATH, clientSocket } from '.'
 import * as fs from 'fs'
-import { SYSTEM_PROMPT, extractCode, llm } from './llm'
+import { extractCode, llm, getSystemPrompt } from './llm'
 require('dotenv').config()
+
+const config: Config = {
+  family: 'local',
+  model: 'codellama:13b-instruct'
+}
 
 export class Runner {
   private _goal: string = ''
   public messages: Message[] = []
   public repl: Execute
   public blocks: Block[] = []
+  public config: Config
 
   constructor() {
     this.repl = new Execute()
+    this.config = config
   }
 
   public save() {
@@ -24,6 +31,7 @@ export class Runner {
     fs.writeFileSync(`${path}/goal.txt`, this.goal)
     fs.writeFileSync(`${path}/blocks.json`, JSON.stringify(this.blocks))
     fs.writeFileSync(`${path}/messages.json`, JSON.stringify(this.messages))
+    fs.writeFileSync(`${path}/config.json`, JSON.stringify(this.config))
   }
 
   public load() {
@@ -33,6 +41,7 @@ export class Runner {
       this.goal = fs.readFileSync(`${path}/goal.txt`, 'utf8')
       this.blocks = JSON.parse(fs.readFileSync(`${path}/blocks.json`, 'utf8'))
       this.messages = JSON.parse(fs.readFileSync(`${path}/messages.json`, 'utf8'))
+      this.config = JSON.parse(fs.readFileSync(`${path}/config.json`, 'utf8'))
     }
   }
 
@@ -93,7 +102,7 @@ export class Runner {
     const lastMessage = this.messages[this.messages.length - 1]
 
     if (lastMessage.role === 'user') {
-      const response = await llm(this.messages, clientSocket)
+      const response = await llm(this.messages, this.config, clientSocket)
 
       this.messages.push(response)
 
@@ -110,7 +119,7 @@ export class Runner {
           function_name: response.function_call.name,
           function_args: {
             language: 'javascript',
-            code: extractCode(response.function_call.arguments),
+            code: extractCode(response.function_call.arguments, this.config),
           },
         })
         this.blocks.push({
@@ -131,7 +140,7 @@ export class Runner {
     }
 
     if (lastMessage.role === 'function') {
-      const responseRaw = await llm(this.messages, clientSocket)
+      const responseRaw = await llm(this.messages, this.config, clientSocket)
 
       let response = responseRaw
 
@@ -149,7 +158,7 @@ export class Runner {
           function_name: response.function_call.name,
           function_args: {
             language: 'javascript',
-            code: extractCode(response.function_call.arguments),
+            code: extractCode(response.function_call.arguments, this.config),
           },
         })
         this.blocks.push({
@@ -174,7 +183,7 @@ export class Runner {
     const messages: Message[] = [
       {
         role: 'system',
-        content: SYSTEM_PROMPT,
+        content: getSystemPrompt(this.config),
       },
       {
         role: 'user',
@@ -184,7 +193,7 @@ export class Runner {
 
     this.messages = messages
 
-    const response = await llm(messages, clientSocket)
+    const response = await llm(messages, this.config, clientSocket)
 
     if (response.content) {
       this.blocks.push({
@@ -200,7 +209,7 @@ export class Runner {
         function_name: response.function_call.name,
         function_args: {
           language: 'javascript',
-          code: extractCode(response.function_call.arguments),
+          code: extractCode(response.function_call.arguments, this.config),
         },
       })
       this.blocks.push({
@@ -277,3 +286,8 @@ type Block =
   | BlockApproval
   | BlockGoal
   | BlockFunctionReturn
+
+export type Config = {
+  family: "local" | "openai"
+  model: string
+}

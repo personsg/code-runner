@@ -49,6 +49,12 @@ wss.on('connection', function connection(ws) {
       blocks: runner.blocks,
     }),
   )
+  ws.send(
+    JSON.stringify({
+      type: 'config',
+      messages: runner.config,
+    }),
+  )
   if (runner.goal.length > 0) {
     ws.send(
       JSON.stringify({

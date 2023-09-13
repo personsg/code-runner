@@ -1,11 +1,12 @@
 import { WebSocket } from 'ws'
-import { Message } from './runner'
+import { Config, Message } from './runner'
 import * as http from 'http'
 import { ChatCompletionMessageParam } from 'openai/resources/chat'
-import { extractCode as extractCode2 } from './llm'
+import { extractCode as extractCode2 } from './openai'
 
 export async function llm(
   inputMessages: Message[],
+  config: Config,
   clientSocket?: WebSocket,
 ): Promise<ChatCompletionMessageParam> {
   const prompt = build_prompt(inputMessages)
@@ -61,13 +62,18 @@ async function post(prompt: string, clientSocket?: WebSocket): Promise<string> {
 
     const req = http.request(options, res => {
       res.on('data', chunk => {
-        parts.push(JSON.parse(chunk.toString()).response)
+        const content = JSON.parse(chunk.toString()).response
+        parts.push(content)
+
+        // TODO: if inside code block, add to function_call/arguments
         if (clientSocket) {
           try {
             clientSocket.send(
               JSON.stringify({
                 type: 'part',
-                part: JSON.parse(chunk.toString()).response,
+                part: {
+                  choices: [{ delta: { content } }]
+                }
               }),
             )
           } catch { }
