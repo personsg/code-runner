@@ -1,5 +1,6 @@
 .env
 node_modules/
-runner-server/
 state/
 workspaces/
+runner-server/src/tests
+ee/
