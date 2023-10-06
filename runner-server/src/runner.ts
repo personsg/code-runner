@@ -114,13 +114,13 @@ export class Runner {
     if (lastMessage.role === 'user') {
       const memories = await this.memory.searchMemory(lastMessage.content)
 
-      const augmentedLastMessage = {
+      const augmentedLastMessage = memories.length > 0 ? {
         ...lastMessage,
         content: `You recall the below memories from your past conversations:\n
         ${memories.map((m) => m.content).join('\n')}
 
         ${lastMessage.content}`
-      }
+      } : lastMessage
 
       const conversation = [...this.messages.slice(0, this.messages.length - 1), augmentedLastMessage]
 
@@ -132,11 +132,11 @@ export class Runner {
       })
 
       this.messages.push(response)
-      this.memory.addMemory({
-        type: 'conversation',
-        source: 'agent',
-        content: response.content,
-      })
+      // this.memory.addMemory({
+      //   type: 'conversation',
+      //   source: 'agent',
+      //   content: response.content,
+      // })
 
       if (response.content) {
         this.blocks.push({
@@ -233,11 +233,11 @@ export class Runner {
         content: response.content,
       })
       this.messages.push(response)
-      this.memory.addMemory({
-        type: 'conversation',
-        source: 'agent',
-        content: response.content,
-      })
+      // this.memory.addMemory({
+      //   type: 'conversation',
+      //   source: 'agent',
+      //   content: response.content,
+      // })
     }
 
     if (response.function_call) {
