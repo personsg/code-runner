@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import Markdown from 'markdown-to-jsx'
-import Blocks, { Block } from './components/Blocks'
+import Blocks from './components/Blocks'
+import { Block } from '../../runner-server/src/runner'
 
 function App() {
   const [goal, setGoal] = useState('')
@@ -133,15 +134,15 @@ function App() {
               {streamParts.some(
                 e => e?.choices && e?.choices[0]?.delta?.function_call,
               ) && (
-                <div className='function-call'>
-                  <Markdown>
-                    {streamParts
-                      .map(e => e.choices[0]?.delta?.function_call?.arguments)
-                      .join('')
-                      .substring(-35) || ''}
-                  </Markdown>
-                </div>
-              )}
+                  <div className='function-call'>
+                    <Markdown>
+                      {streamParts
+                        .map(e => e.choices[0]?.delta?.function_call?.arguments)
+                        .join('')
+                        .substring(-35) || ''}
+                    </Markdown>
+                  </div>
+                )}
             </>
           )}
         </div>

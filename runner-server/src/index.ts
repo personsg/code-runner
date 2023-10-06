@@ -5,13 +5,17 @@ import * as fs from 'fs'
 
 export const EXECUTION_PATH = path.join(__dirname, '../../workspaces/runner1')
 export const DATA_PATH = path.join(__dirname, '../../state/runner1')
+export const MEMORY_PATH = path.join(__dirname, '../../state/runner1/memory.db')
+export const RUNNER_MODEL = 'codellama:13b-instruct'
 
 fs.mkdirSync(EXECUTION_PATH, { recursive: true })
 fs.mkdirSync(DATA_PATH, { recursive: true })
 process.chdir(EXECUTION_PATH)
 
 let runner = new Runner()
-runner.load()
+runner.load().then(() => {
+  console.log('Loaded runner')
+})
 
 const wss = new WebSocketServer({
   port: 8080,

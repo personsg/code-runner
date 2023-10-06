@@ -1,5 +1,6 @@
 import Markdown from 'markdown-to-jsx'
 import Code from './Code'
+import { Block } from '../../../runner-server/src/runner'
 
 function Blocks({ blocks, socket }: { blocks: Block[]; socket: WebSocket }) {
   return blocks.map((e, i) => {
@@ -114,47 +115,52 @@ function Blocks({ blocks, socket }: { blocks: Block[]; socket: WebSocket }) {
         </div>
       )
     }
+    else if (e.type === 'memory') {
+      return <div>
+        <p style={{ backgroundColor: 'blue' }}>{JSON.stringify(e.content)}</p>
+      </div>
+    }
   })
 }
 
-type BlockGoal = {
-  type: 'goal'
-  content: string
-}
+// type BlockGoal = {
+//   type: 'goal'
+//   content: string
+// }
 
-type BlockUser = {
-  type: 'user'
-  content: string
-}
+// type BlockUser = {
+//   type: 'user'
+//   content: string
+// }
 
-type BlockAssistant = {
-  type: 'assistant'
-  content: string
-}
+// type BlockAssistant = {
+//   type: 'assistant'
+//   content: string
+// }
 
-type BlockFunctionCall = {
-  type: 'function_call'
-  function_name: string
-  function_args: any
-}
+// type BlockFunctionCall = {
+//   type: 'function_call'
+//   function_name: string
+//   function_args: any
+// }
 
-type BlockApproval = {
-  type: 'approval'
-  content: string
-  status: 'new' | 'approved' | 'rejected'
-}
+// type BlockApproval = {
+//   type: 'approval'
+//   content: string
+//   status: 'new' | 'approved' | 'rejected'
+// }
 
-type BlockFunctionReturn = {
-  type: 'function_return'
-  content: string
-}
+// type BlockFunctionReturn = {
+//   type: 'function_return'
+//   content: string
+// }
 
-export type Block =
-  | BlockUser
-  | BlockAssistant
-  | BlockFunctionCall
-  | BlockApproval
-  | BlockGoal
-  | BlockFunctionReturn
+// export type Block =
+//   | BlockUser
+//   | BlockAssistant
+//   | BlockFunctionCall
+//   | BlockApproval
+//   | BlockGoal
+//   | BlockFunctionReturn
 
 export default Blocks

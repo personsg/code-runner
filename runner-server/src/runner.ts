@@ -3,6 +3,7 @@ import Execute from './repl'
 import { DATA_PATH, clientSocket } from '.'
 import * as fs from 'fs'
 import { extractCode, llm, getSystemPrompt } from './llm'
+import LTM, { Memory } from './ltm'
 require('dotenv').config()
 
 const config: Config = {
@@ -16,10 +17,12 @@ export class Runner {
   public repl: Execute
   public blocks: Block[] = []
   public config: Config
+  public memory: LTM
 
   constructor() {
     this.repl = new Execute()
     this.config = config
+    this.memory = new LTM()
   }
 
   public save() {
@@ -34,7 +37,7 @@ export class Runner {
     fs.writeFileSync(`${path}/config.json`, JSON.stringify(this.config))
   }
 
-  public load() {
+  public async load() {
     const path = DATA_PATH
     console.log(path)
     if (fs.existsSync(path + '/goal.txt')) {
@@ -43,6 +46,8 @@ export class Runner {
       this.messages = JSON.parse(fs.readFileSync(`${path}/messages.json`, 'utf8'))
       this.config = JSON.parse(fs.readFileSync(`${path}/config.json`, 'utf8'))
     }
+
+    await this.memory.load()
   }
 
   public async approveCodeBlock() {
@@ -94,6 +99,11 @@ export class Runner {
       type: 'user',
       content: message,
     })
+    // this.memory.addMemory({
+    //   type: 'conversation',
+    //   source: 'user',
+    //   content: message,
+    // })
     this.save()
     this.loop()
   }
@@ -102,9 +112,31 @@ export class Runner {
     const lastMessage = this.messages[this.messages.length - 1]
 
     if (lastMessage.role === 'user') {
-      const response = await llm(this.messages, this.config, clientSocket)
+      const memories = await this.memory.searchMemory(lastMessage.content)
+
+      const augmentedLastMessage = {
+        ...lastMessage,
+        content: `You recall the below memories from your past conversations:\n
+        ${memories.map((m) => m.content).join('\n')}
+
+        ${lastMessage.content}`
+      }
+
+      const conversation = [...this.messages.slice(0, this.messages.length - 1), augmentedLastMessage]
+
+      const response = await llm(conversation, this.config, clientSocket)
+
+      this.blocks.push({
+        type: 'memory',
+        content: memories
+      })
 
       this.messages.push(response)
+      this.memory.addMemory({
+        type: 'conversation',
+        source: 'agent',
+        content: response.content,
+      })
 
       if (response.content) {
         this.blocks.push({
@@ -201,6 +233,11 @@ export class Runner {
         content: response.content,
       })
       this.messages.push(response)
+      this.memory.addMemory({
+        type: 'conversation',
+        source: 'agent',
+        content: response.content,
+      })
     }
 
     if (response.function_call) {
@@ -279,13 +316,19 @@ type BlockApproval = {
   status: 'new' | 'approved' | 'rejected'
 }
 
-type Block =
+type BlockMemory = {
+  type: 'memory'
+  content: Memory[]
+}
+
+export type Block =
   | BlockUser
   | BlockAssistant
   | BlockFunctionCall
   | BlockApproval
   | BlockGoal
   | BlockFunctionReturn
+  | BlockMemory
 
 export type Config = {
   family: "local" | "openai"
