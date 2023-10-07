@@ -3,20 +3,14 @@
 <br>
 <h2>Open source GPT-powered REPL</h2>
 
-Code Runner is a LLM-powered REPL that runs on your machine, allowing the
-language model to run code directly on your computer.
-
-Code Runner is designed to be easily hackable. A lot of the code is a bit hacky
-right now, but splicing in new features should be pretty straight forward. Have
-fun hacking!
+Code Runner is a LLM-powered REPL that runs on your machine.
 
 !IMPORTANT: There are inherent risks with running AI generated code directly on
 your machine -- Code Runner will ask for approval before running code, and if
 there's something wrong with code it produces you can prompt it to regenerate.
-Code editing in editor coming soon!
+Code editing in app coming soon!
 
-The stubs are in place to support local models with Ollama, and that will be
-enabled soon.
+The stubs are in place to support local models with Ollama.
 
 <br>
 
