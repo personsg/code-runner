@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import './App.css'
+import { Box, Button, TextField, Typography } from '@mui/material'
 import Markdown from 'markdown-to-jsx'
 import Blocks from './components/Blocks'
 import { Block } from '../../server/src/runner'
@@ -99,70 +99,105 @@ function App() {
   }, [])
 
   return (
-    <div>
-      <div className={`goal-container ${goalSent ? 'goal-sent' : ''}`}>
-        <input
-          className={`goal-input ${goalSent ? 'goal-sent' : ''}`}
+    <Box>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'absolute',
+          top: goalSent ? '40px' : '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          transition: 'top 0.7s ease-out',
+        }}
+      >
+        <TextField
+          sx={{
+            width: goalSent ? '600px' : '400px',
+            // height: '33px',
+            // border: '1px solid black',
+            transition: 'width 0.7s ease-out',
+          }}
           type='text'
           value={goal}
           onChange={e => setGoal(e.target.value)}
           disabled={!!goalSent}
         />
-        <button
-          className={`goal-button ${goalSent ? 'goal-sent' : ''}`}
+        <Button
+          sx={{
+            marginLeft: '10px',
+            // height: 'calc(33px + 2px)',
+            // border: '1px solid black',
+            visibility: goalSent ? 'hidden' : 'visible',
+          }}
+          variant='contained'
           onClick={() => sendGoal(goal)}
           disabled={!!goalSent}
         >
           Enter
-        </button>
+        </Button>
         {goalSent && (
-          <button className={`goal-button`} onClick={() => newChat()}>
+          <Button sx={{ marginLeft: '10px' }} variant='contained' onClick={() => newChat()}>
             New
-          </button>
+          </Button>
         )}
-      </div>
-      <div className='messages-list'>
+      </Box>
+      <Box sx={{ maxWidth: '800px', margin: '0 auto', marginTop: '80px' }}>
         {socket && <Blocks blocks={blocks} socket={socket} />}
-        <div>
+        <Box>
           {isStreaming && (
             <>
-              <div>
+              <Box sx={{ padding: '2em', marginBottom: '1em' }}>
                 <Markdown>
                   {streamParts.map(e => e?.choices[0]?.delta?.content).join('')}
                 </Markdown>
-              </div>
+              </Box>
               {streamParts.some(
                 e => e?.choices && e?.choices[0]?.delta?.function_call,
               ) && (
-                  <div className='function-call'>
+                  <Box sx={{ padding: '2em', marginBottom: '1em' }}>
                     <Markdown>
                       {streamParts
                         .map(e => e.choices[0]?.delta?.function_call?.arguments)
                         .join('')
                         .substring(-35) || ''}
                     </Markdown>
-                  </div>
+                  </Box>
                 )}
             </>
           )}
-        </div>
-        <div className='bottom-spacing'></div>
-      </div>
+        </Box>
+        <Box sx={{ height: '80px' }}></Box>
+      </Box>
       {goalSent && (
-        <div className='chat-container'>
-          <input
-            className='chat-input'
+        <Box
+          sx={{
+            position: 'fixed',
+            // height: '40px',
+            bottom: '30px',
+            width: '600px',
+            display: 'flex',
+            flexDirection: 'row',
+            // backgroundColor: '#f0f0f0',
+            left: '50%',
+            transform: 'translateX(-50%)',
+          }}
+        >
+          <TextField
+            sx={{ flex: 1, marginRight: '10px' }}
             type='textarea'
             value={chatMessage}
             onChange={e => setChatMessage(e.target.value)}
           />
-          <button onClick={sendChatMessage}>Send</button>
-        </div>
+          <Button variant='contained' onClick={sendChatMessage}>Send</Button>
+        </Box>
       )}
       {!socket ||
         (socket.readyState !== WebSocket.OPEN && (
-          <div
-            style={{
+          <Typography
+            sx={{
               position: 'absolute',
               top: 16,
               right: 32,
@@ -172,9 +207,9 @@ function App() {
             }}
           >
             No Connection
-          </div>
+          </Typography>
         ))}
-    </div>
+    </Box>
   )
 }
 

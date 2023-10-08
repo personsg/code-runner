@@ -112,24 +112,24 @@ export class Runner {
     const lastMessage = this.messages[this.messages.length - 1]
 
     if (lastMessage.role === 'user') {
-      const memories = await this.memory.searchMemory(lastMessage.content)
+      // const memories = await this.memory.searchMemory(lastMessage.content)
 
-      const augmentedLastMessage = memories.length > 0 ? {
-        ...lastMessage,
-        content: `You recall the below memories from your past conversations:\n
-        ${memories.map((m) => m.content).join('\n')}
+      // const augmentedLastMessage = memories.length > 0 ? {
+      //   ...lastMessage,
+      //   content: `You recall the below memories from your past conversations:\n
+      //   ${memories.map((m) => m.content).join('\n')}
 
-        ${lastMessage.content}`
-      } : lastMessage
+      //   ${lastMessage.content}`
+      // } : lastMessage
 
-      const conversation = [...this.messages.slice(0, this.messages.length - 1), augmentedLastMessage]
+      // const conversation = [...this.messages.slice(0, this.messages.length - 1), augmentedLastMessage]
 
-      const response = await llm(conversation, this.config, clientSocket)
+      const response = await llm(this.messages, this.config, clientSocket)
 
-      this.blocks.push({
-        type: 'memory',
-        content: memories
-      })
+      // this.blocks.push({
+      //   type: 'memory',
+      //   content: memories
+      // })
 
       this.messages.push(response)
       // this.memory.addMemory({

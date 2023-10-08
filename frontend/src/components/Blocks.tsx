@@ -1,6 +1,7 @@
 import Markdown from 'markdown-to-jsx'
 import Code from './Code'
-import { Block } from '../../../runner-server/src/runner'
+import { Block } from '../../../server/src/runner'
+import { Button, Box, Typography, ImageList, ImageListItem } from '@mui/material'
 
 function Blocks({ blocks, socket }: { blocks: Block[]; socket: WebSocket }) {
   return blocks.map((e, i) => {
@@ -8,23 +9,15 @@ function Blocks({ blocks, socket }: { blocks: Block[]; socket: WebSocket }) {
       return null
     } else if (e.type === 'assistant') {
       return (
-        <div
-          style={{
-            marginBottom: '1em',
-          }}
-        >
-          <Markdown>{e.content}</Markdown>
-        </div>
+        <Box marginBottom={2} sx={{ width: '100%', backgroundColor: '#333' }}>
+          <Typography>{e.content}</Typography>
+        </Box>
       )
     } else if (e.type === 'function_call') {
       return (
-        <div
-          style={{
-            marginBottom: '1em',
-          }}
-        >
+        <Box marginBottom={2}>
           <Code code={e.function_args.code} />
-        </div>
+        </Box>
       )
     } else if (e.type === 'function_return') {
       let content = ''
@@ -36,68 +29,63 @@ function Blocks({ blocks, socket }: { blocks: Block[]; socket: WebSocket }) {
 
       if (content.startsWith('http')) {
         return (
-          <div
-            style={{
-              marginBottom: '1em',
-            }}
-          >
-            <img src={content} />
-          </div>
+          <Box marginBottom={2}>
+            <ImageList cols={1}>
+              <ImageListItem>
+                <img src={content} />
+              </ImageListItem>
+            </ImageList>
+          </Box>
         )
       }
       if (content.includes('data:image/png;base64')) {
         return (
-          <div
-            style={{
-              marginBottom: '1em',
-            }}
-          >
-            <img
-              src={content}
-              style={{
-                maxWidth: '100%',
-              }}
-            />
-          </div>
+          <Box marginBottom={2}>
+            <ImageList cols={1}>
+              <ImageListItem>
+                <img
+                  src={content}
+                  style={{
+                    maxWidth: '100%',
+                  }}
+                />
+              </ImageListItem>
+            </ImageList>
+          </Box>
         )
       }
 
       return (
-        <div
-          style={{
-            backgroundColor: '#333333',
-            padding: '2em',
-            marginBottom: '1em',
-          }}
+        <Box
+          bgcolor='#333333'
+          padding={2}
+          marginBottom={2}
         >
           <Markdown>
             {content.length > 200 ? content.substring(0, 200) + '...' : content}
           </Markdown>
-        </div>
+        </Box>
       )
     } else if (e.type === 'user') {
       return (
-        <div
-          style={{
-            marginBottom: '1em',
-            backgroundColor: '#333333',
-          }}
+        <Box
+          sx={{ width: '100%' }}
+          marginBottom={2}
+        // bgcolor='#333333'
         >
-          <Markdown>{e.content}</Markdown>
-        </div>
+          <Typography>{e.content}</Typography>
+        </Box>
       )
     } else if (e.type === 'approval') {
       const isLastBlock = i === blocks.length - 1
 
       return (
-        <div
-          style={{
-            marginBottom: '1em',
-          }}
-        >
+        <Box marginBottom={2}>
           <Markdown>{e.content}</Markdown>
           {isLastBlock ? (
-            <button
+            <Button
+              sx={{ ml: '1em' }}
+              variant='contained'
               onClick={() => {
                 if (socket) {
                   socket.send(
@@ -110,57 +98,18 @@ function Blocks({ blocks, socket }: { blocks: Block[]; socket: WebSocket }) {
               }}
             >
               Approve
-            </button>
+            </Button>
           ) : null}
-        </div>
+        </Box>
       )
     }
     else if (e.type === 'memory') {
-      return <div>
-        <p style={{ backgroundColor: 'blue' }}>{JSON.stringify(e.content)}</p>
-      </div>
+      return <Box>
+        <Typography style={{ backgroundColor: 'blue' }}>{JSON.stringify(e.content)}</Typography>
+      </Box>
     }
   })
 }
 
-// type BlockGoal = {
-//   type: 'goal'
-//   content: string
-// }
-
-// type BlockUser = {
-//   type: 'user'
-//   content: string
-// }
-
-// type BlockAssistant = {
-//   type: 'assistant'
-//   content: string
-// }
-
-// type BlockFunctionCall = {
-//   type: 'function_call'
-//   function_name: string
-//   function_args: any
-// }
-
-// type BlockApproval = {
-//   type: 'approval'
-//   content: string
-//   status: 'new' | 'approved' | 'rejected'
-// }
-
-// type BlockFunctionReturn = {
-//   type: 'function_return'
-//   content: string
-// }
-
-// export type Block =
-//   | BlockUser
-//   | BlockAssistant
-//   | BlockFunctionCall
-//   | BlockApproval
-//   | BlockGoal
-//   | BlockFunctionReturn
-
 export default Blocks
+
