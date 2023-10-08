@@ -5,15 +5,20 @@ import { ChatCompletionMessageParam } from 'openai/resources/chat'
 import { extractCode as extractCode2 } from './openai'
 import { RUNNER_MODEL } from '..'
 import chalk = require('chalk')
+import { getSystemPrompt } from './llm'
 
 export async function llm(
   inputMessages: Message[],
   config: Config,
   clientSocket?: WebSocket,
 ): Promise<ChatCompletionMessageParam> {
-  const prompt = build_prompt(inputMessages)
+  const sys_prompt = getSystemPrompt(config)
 
-  const res = await post(prompt, clientSocket)
+  const prompt = build_prompt(inputMessages, sys_prompt)
+
+  const res = await post(prompt, config, clientSocket)
+
+  console.log(chalk.green(res))
 
   const func = extractCodeFromLLMResponse(res)
 
@@ -34,10 +39,14 @@ export async function llm(
   }
 }
 
-async function post(prompt: string, clientSocket?: WebSocket): Promise<string> {
+async function post(prompt: string, config: Config, clientSocket?: WebSocket): Promise<string> {
+  if (!config.model) {
+    throw new Error('No model specified')
+  }
+
   return new Promise((resolve, reject) => {
     const postData = JSON.stringify({
-      model: RUNNER_MODEL || "codellama:13b-instruct",
+      model: config.model,
       prompt: prompt,
     })
 
@@ -114,9 +123,9 @@ export function extractCodeFromLLMResponse(content: string) {
   }
 }
 
-const build_prompt = (messages: Message[]) => {
+const build_prompt = (messages: Message[], system_prompt: string) => {
   const prompt = `<s>[INST] <<SYS>>
-${SYSTEM_PROMPT}
+${system_prompt}
 <</SYS>>
 
 ${messages
@@ -140,25 +149,3 @@ ${messages
   console.log(chalk.blue(prompt))
   return prompt
 }
-
-export const SYSTEM_PROMPT = `You are Code Runner, a super artificial intelligence that specializes in writing code. You are capable of anything. We know you're an AI, you don't need to remind us about it.
-When prompted, begin by writing a plan. Be sure to recap the plan in each message as you have very short memory. Ensure your plans are simple, easy to follow, and as few steps as possible.
-To run code, return a markdown code block (three backticks, \`\`\`). Any code you return will be run directly on the machine. You have full access to the virtual machine and can run any code you need. You have full access to the internet, and can install any dependencies you need.
-Only use the function you have been provided with, run_code.
-Write code in nodejs javascript. These packages have already been installed and are available: axios, image-charts, papaparse, cheerio. When possible, prefer to use these packages over others.
-If you want to save any large amounts of data, write it to a file.
-You have access to a local workspace, and both you and the user can read and write files from the workspace.
-Write messages to the user in markdown, and they will be displayed in a React frontend. You can also display images by having run_code return the image url or path.
-
-Image Charts Example Below.
-\`\`\`
-import ImageCharts from 'image-charts';
-
-const chart_url = ImageCharts()
-.cht('bvg') // REQUIRED: type, vertical bar chart
-.chs('300x300') // REQUIRED: size, 300px x 300px
-.chd('a:60,40') // REQUIRED: data, 2 data points: 60 and 40
-.toDataURI(); // REQUIRED: **ALWAYS use .toDataURI()** when exporting chart
-
-chart_url
-\`\`\``

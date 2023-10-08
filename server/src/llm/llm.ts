@@ -2,6 +2,7 @@ import * as openaillm from './openai'
 import * as ollama from './ollama'
 import { Config, Message } from '../runner'
 import { WebSocket } from 'ws'
+import { ollama_system_prompts } from './ollama_system_prompts'
 
 
 // TODO move this all to an adapter system
@@ -32,7 +33,12 @@ export function extractCode(content: string, config: Config) {
 
 export function getSystemPrompt(config: Config) {
   if (config.family === "local") {
-    return ollama.SYSTEM_PROMPT
+    const sys_prompt = ollama_system_prompts.find(p => p.name === config.system_prompt)
+    if (!sys_prompt) {
+      throw new Error(`System prompt ${config.system_prompt} does not exist`)
+    }
+
+    return sys_prompt.prompt
   }
   else if (config.family === "openai") {
     return openaillm.SYSTEM_PROMPT

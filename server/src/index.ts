@@ -2,6 +2,7 @@ import { WebSocketServer, WebSocket } from 'ws'
 import { Runner } from './runner'
 import * as path from 'path'
 import * as fs from 'fs'
+import { ollama_system_prompts } from './llm/ollama_system_prompts'
 
 export const EXECUTION_PATH = path.join(__dirname, '../../workspaces')
 export const STATE_PATH = path.join(__dirname, '../../state')
@@ -73,6 +74,26 @@ wss.on('connection', function connection(ws) {
           }),
         )
       }
+    } else if (message.type === "set-system-prompt") {
+      const sys_prompt = ollama_system_prompts.find(p => p.name === message.content)
+
+      if (!sys_prompt) {
+        throw new Error(`System prompt ${message.content} does not exist`)
+      }
+
+      runner.config = {
+        ...runner.config,
+        system_prompt: sys_prompt.name as "chat" | "code-runner"
+      }
+
+      console.log('set system prompt', runner.config.system_prompt)
+
+      clientSocket.send(
+        JSON.stringify({
+          type: 'config',
+          content: runner.config,
+        }),
+      )
     }
   })
 

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Box, Button, TextField, Typography, Drawer, List, ListItem, ListItemText, ListItemButton, ListItemIcon } from '@mui/material'
+import { Box, Button, TextField, Typography, Drawer, List, ListItem, ListItemText, ListItemButton, ListItemIcon, Select, MenuItem } from '@mui/material'
 import Markdown from 'markdown-to-jsx'
 import Blocks from './components/Blocks'
-import { Block } from '../../server/src/runner'
+import { Block, Config } from '../../server/src/runner'
 import React from 'react'
 
 function App() {
@@ -15,6 +15,7 @@ function App() {
   const [chatMessage, setChatMessage] = useState('')
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [chats, setChats] = useState<string[]>([])
+  const [config, setConfig] = useState<Config | null>(null)
 
   const sendGoal = (message: string) => {
     if (socket) {
@@ -87,6 +88,16 @@ function App() {
     }
   }
 
+  const switchSystemPrompt = (prompt: string) => {
+    if (socket) {
+      const payload = {
+        type: 'set-system-prompt',
+        content: prompt,
+      }
+      socket.send(JSON.stringify(payload))
+    }
+  }
+
   const resetState = () => {
     setGoal('')
     setGoalSent(false)
@@ -130,6 +141,10 @@ function App() {
       if (data.type === "delete-chat") {
         listChats()
       }
+      if (data.type === 'config') {
+        console.log('setting config', data.content)
+        setConfig(data.content)
+      }
     }
 
     return () => {
@@ -141,6 +156,14 @@ function App() {
     <Box>
       <React.Fragment>
         <Button onClick={() => setDrawerOpen(true)}>Chats</Button>
+        <Select
+          sx={{ marginLeft: '10px' }}
+          value={config ? config.system_prompt : ''}
+          onChange={(event) => switchSystemPrompt(event.target.value)}
+        >
+          <MenuItem value='code-runner'>Code Runner</MenuItem>
+          <MenuItem value='chat'>Chat</MenuItem>
+        </Select>
         <Drawer
           anchor='left'
           open={drawerOpen}

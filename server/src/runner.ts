@@ -8,9 +8,10 @@ import * as crypto from 'crypto'
 import * as path from 'path'
 require('dotenv').config()
 
-const config: Config = {
+const default_config: Config = {
   family: 'local',
-  model: RUNNER_MODEL
+  model: "codellama:13b-instruct",
+  system_prompt: 'code-runner',
 }
 
 export class Runner {
@@ -24,7 +25,7 @@ export class Runner {
 
   constructor(chat_id?: string) {
     this.repl = new Execute()
-    this.config = config
+    this.config = default_config
     this.memory = new LTM()
 
     if (chat_id) {
@@ -309,7 +310,7 @@ export class Runner {
     clientSocket.send(
       JSON.stringify({
         type: 'config',
-        messages: this.config,
+        content: this.config,
       }),
     )
     if (this.goal.length > 0) {
@@ -376,5 +377,6 @@ export type Block =
 
 export type Config = {
   family: "local" | "openai"
-  model: string
+  model: string,
+  system_prompt: 'code-runner' | 'chat'
 }
