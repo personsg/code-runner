@@ -10,7 +10,7 @@ function Blocks({ blocks, socket }: { blocks: Block[]; socket: WebSocket }) {
     } else if (e.type === 'assistant') {
       return (
         <Box marginBottom={2} sx={{ width: '100%', backgroundColor: '#333' }}>
-          <Typography>{e.content}</Typography>
+          <Markdown>{e.content}</Markdown>
         </Box>
       )
     } else if (e.type === 'function_call') {
@@ -73,7 +73,7 @@ function Blocks({ blocks, socket }: { blocks: Block[]; socket: WebSocket }) {
           marginBottom={2}
         // bgcolor='#333333'
         >
-          <Typography>{e.content}</Typography>
+          <Markdown>{e.content}</Markdown>
         </Box>
       )
     } else if (e.type === 'approval') {

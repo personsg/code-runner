@@ -3,19 +3,12 @@ import { Runner } from './runner'
 import * as path from 'path'
 import * as fs from 'fs'
 
-export const EXECUTION_PATH = path.join(__dirname, '../../workspaces/runner1')
-export const DATA_PATH = path.join(__dirname, '../../state/runner1')
+export const EXECUTION_PATH = path.join(__dirname, '../../workspaces')
+export const STATE_PATH = path.join(__dirname, '../../state')
 export const MEMORY_PATH = path.join(__dirname, '../../state/runner1/memory.db')
 export const RUNNER_MODEL = 'codellama:13b-instruct'
 
-fs.mkdirSync(EXECUTION_PATH, { recursive: true })
-fs.mkdirSync(DATA_PATH, { recursive: true })
-process.chdir(EXECUTION_PATH)
-
 let runner = new Runner()
-runner.load().then(() => {
-  console.log('Loaded runner')
-})
 
 const wss = new WebSocketServer({
   port: 8080,
@@ -36,37 +29,62 @@ wss.on('connection', function connection(ws) {
     } else if (message.type === 'approval') {
       runner.approveCodeBlock()
     } else if (message.type === 'chat') {
+      // if current chat doesn't exist, create a new runner
+      if (!runner.chat_id) {
+        runner = new Runner()
+      }
+
       runner.userResponse(message.content)
     } else if (message.type === 'new-chat') {
       runner = new Runner()
+    } else if (message.type === 'switch-chat') {
+      const chat_id = message.content
+      runner = new Runner(chat_id)
+    } else if (message.type === 'list-chats') {
+      const chats = fs.readdirSync(STATE_PATH)
+      ws.send(
+        JSON.stringify({
+          type: 'list-chats',
+          content: chats,
+        }),
+      )
+    } else if (message.type === 'delete-chat') {
+      const chat_id = message.content
+
+      // if (runner.chat_id === chat_id) {
+      //   runner = new Runner()
+      // }
+
+      const chatPath = path.join(STATE_PATH, chat_id)
+      if (fs.existsSync(chatPath)) {
+        fs.rmSync(chatPath, { recursive: true })
+        const chats = fs.readdirSync(STATE_PATH)
+        ws.send(
+          JSON.stringify({
+            type: 'list-chats',
+            content: chats,
+          }),
+        )
+      } else {
+        ws.send(
+          JSON.stringify({
+            type: 'error',
+            content: `Chat ${chat_id} does not exist`,
+          }),
+        )
+      }
     }
   })
 
+  runner.broadcast()
+
+  const chats = fs.readdirSync(STATE_PATH)
   ws.send(
     JSON.stringify({
-      type: 'connected',
+      type: 'list-chats',
+      content: chats,
     }),
   )
-  ws.send(
-    JSON.stringify({
-      type: 'blocks',
-      blocks: runner.blocks,
-    }),
-  )
-  ws.send(
-    JSON.stringify({
-      type: 'config',
-      messages: runner.config,
-    }),
-  )
-  if (runner.goal.length > 0) {
-    ws.send(
-      JSON.stringify({
-        type: 'goal',
-        content: runner.goal,
-      }),
-    )
-  }
 })
 
 console.log('Server started on port 8080')

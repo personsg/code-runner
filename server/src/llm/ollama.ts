@@ -3,6 +3,8 @@ import { Config, Message } from '../runner'
 import * as http from 'http'
 import { ChatCompletionMessageParam } from 'openai/resources/chat'
 import { extractCode as extractCode2 } from './openai'
+import { RUNNER_MODEL } from '..'
+import chalk = require('chalk')
 
 export async function llm(
   inputMessages: Message[],
@@ -35,7 +37,7 @@ export async function llm(
 async function post(prompt: string, clientSocket?: WebSocket): Promise<string> {
   return new Promise((resolve, reject) => {
     const postData = JSON.stringify({
-      model: 'codellama:7b-instruct',
+      model: RUNNER_MODEL || "codellama:13b-instruct",
       prompt: prompt,
     })
 
@@ -120,7 +122,7 @@ ${SYSTEM_PROMPT}
 ${messages
       .map((e, i) => {
         if (e.role === 'user') {
-          if (i === 0) {
+          if (i === 1) {
             return e.content + ' [/INST]\n'
           } else {
             return '<s>[INST] ' + e.content + ' [/INST]\n'
@@ -135,6 +137,7 @@ ${messages
       .join('')}
 `
 
+  console.log(chalk.blue(prompt))
   return prompt
 }
 

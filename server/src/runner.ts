@@ -1,14 +1,16 @@
 import { ChatCompletionMessageParam } from 'openai/resources/chat'
 import Execute from './repl'
-import { DATA_PATH, clientSocket } from '.'
+import { EXECUTION_PATH, RUNNER_MODEL, STATE_PATH, clientSocket } from '.'
 import * as fs from 'fs'
 import { extractCode, llm, getSystemPrompt } from './llm/llm'
 import LTM, { Memory } from './memory/ltm'
+import * as crypto from 'crypto'
+import * as path from 'path'
 require('dotenv').config()
 
 const config: Config = {
   family: 'local',
-  model: 'codellama:13b-instruct'
+  model: RUNNER_MODEL
 }
 
 export class Runner {
@@ -18,36 +20,50 @@ export class Runner {
   public blocks: Block[] = []
   public config: Config
   public memory: LTM
+  public chat_id: string
 
-  constructor() {
+  constructor(chat_id?: string) {
     this.repl = new Execute()
     this.config = config
     this.memory = new LTM()
+
+    if (chat_id) {
+      this.load(chat_id)
+    }
+    else {
+      this.chat_id = crypto.randomBytes(8).toString('hex')
+      fs.mkdirSync(path.join(EXECUTION_PATH, this.chat_id), { recursive: true })
+      fs.mkdirSync(path.join(STATE_PATH, this.chat_id), { recursive: true })
+      process.chdir(path.join(EXECUTION_PATH, this.chat_id))
+    }
   }
 
   public save() {
-    const path = DATA_PATH
-    if (!fs.existsSync(path)) {
-      throw new Error(`Path ${path} does not exist`)
+    const dp = path.join(STATE_PATH, this.chat_id)
+    if (!fs.existsSync(dp)) {
+      throw new Error(`Path ${dp} does not exist`)
     }
 
-    fs.writeFileSync(`${path}/goal.txt`, this.goal)
-    fs.writeFileSync(`${path}/blocks.json`, JSON.stringify(this.blocks))
-    fs.writeFileSync(`${path}/messages.json`, JSON.stringify(this.messages))
-    fs.writeFileSync(`${path}/config.json`, JSON.stringify(this.config))
+    fs.writeFileSync(`${dp}/goal.txt`, this.goal)
+    fs.writeFileSync(`${dp}/blocks.json`, JSON.stringify(this.blocks))
+    fs.writeFileSync(`${dp}/messages.json`, JSON.stringify(this.messages))
+    fs.writeFileSync(`${dp}/config.json`, JSON.stringify(this.config))
   }
 
-  public async load() {
-    const path = DATA_PATH
-    console.log(path)
-    if (fs.existsSync(path + '/goal.txt')) {
-      this.goal = fs.readFileSync(`${path}/goal.txt`, 'utf8')
-      this.blocks = JSON.parse(fs.readFileSync(`${path}/blocks.json`, 'utf8'))
-      this.messages = JSON.parse(fs.readFileSync(`${path}/messages.json`, 'utf8'))
-      this.config = JSON.parse(fs.readFileSync(`${path}/config.json`, 'utf8'))
+  public async load(chat_id: string) {
+    this.chat_id = chat_id
+    const dp = path.join(STATE_PATH, chat_id)
+    console.log(dp)
+    if (fs.existsSync(dp + '/goal.txt')) {
+      this.goal = fs.readFileSync(`${dp}/goal.txt`, 'utf8')
+      this.blocks = JSON.parse(fs.readFileSync(`${dp}/blocks.json`, 'utf8'))
+      this.messages = JSON.parse(fs.readFileSync(`${dp}/messages.json`, 'utf8'))
+      this.config = JSON.parse(fs.readFileSync(`${dp}/config.json`, 'utf8'))
     }
 
     await this.memory.load()
+
+    this.broadcast()
   }
 
   public async approveCodeBlock() {
@@ -276,6 +292,34 @@ export class Runner {
       type: 'goal',
       content: value,
     })
+  }
+
+  public broadcast() {
+    clientSocket.send(
+      JSON.stringify({
+        type: 'connected',
+      }),
+    )
+    clientSocket.send(
+      JSON.stringify({
+        type: 'blocks',
+        blocks: this.blocks,
+      }),
+    )
+    clientSocket.send(
+      JSON.stringify({
+        type: 'config',
+        messages: this.config,
+      }),
+    )
+    if (this.goal.length > 0) {
+      clientSocket.send(
+        JSON.stringify({
+          type: 'goal',
+          content: this.goal,
+        }),
+      )
+    }
   }
 }
 

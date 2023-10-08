@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Box, Button, TextField, Typography } from '@mui/material'
+import { Box, Button, TextField, Typography, Drawer, List, ListItem, ListItemText, ListItemButton, ListItemIcon } from '@mui/material'
 import Markdown from 'markdown-to-jsx'
 import Blocks from './components/Blocks'
 import { Block } from '../../server/src/runner'
+import React from 'react'
 
 function App() {
   const [goal, setGoal] = useState('')
@@ -12,6 +13,8 @@ function App() {
   const [isStreaming, setIsStreaming] = useState(false)
   const [streamParts, setStreamParts] = useState<any[]>([])
   const [chatMessage, setChatMessage] = useState('')
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [chats, setChats] = useState<string[]>([])
 
   const sendGoal = (message: string) => {
     if (socket) {
@@ -55,6 +58,35 @@ function App() {
     }
   }
 
+  const switchChat = (chat_id: string) => {
+    if (socket) {
+      const payload = {
+        type: 'switch-chat',
+        content: chat_id,
+      }
+      socket.send(JSON.stringify(payload))
+    }
+  }
+
+  const listChats = () => {
+    if (socket) {
+      const payload = {
+        type: 'list-chats',
+      }
+      socket.send(JSON.stringify(payload))
+    }
+  }
+
+  const deleteChat = (chat_id: string) => {
+    if (socket) {
+      const payload = {
+        type: 'delete-chat',
+        content: chat_id
+      }
+      socket.send(JSON.stringify(payload))
+    }
+  }
+
   const resetState = () => {
     setGoal('')
     setGoalSent(false)
@@ -70,6 +102,7 @@ function App() {
 
     socket.onopen = () => {
       console.log('Connected to the server')
+      listChats()
     }
 
     socket.onmessage = event => {
@@ -91,6 +124,12 @@ function App() {
       if (data.type === 'part') {
         setStreamParts(prev => [...prev, data.part])
       }
+      if (data.type === 'list-chats') {
+        setChats(data.content)
+      }
+      if (data.type === "delete-chat") {
+        listChats()
+      }
     }
 
     return () => {
@@ -100,6 +139,33 @@ function App() {
 
   return (
     <Box>
+      <React.Fragment>
+        <Button onClick={() => setDrawerOpen(true)}>Chats</Button>
+        <Drawer
+          anchor='left'
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          sx={{
+            width: '300px',
+          }}
+        >
+          <List sx={{ width: 300 }}>
+            {chats.map((chat, index) => (
+              <ListItem disablePadding key={index}>
+                <ListItemButton onClick={() => switchChat(chat)}>
+                  <ListItemIcon>
+                    icon
+                  </ListItemIcon>
+                  <ListItemText primary={chat} />
+                </ListItemButton>
+                <ListItemButton onClick={() => deleteChat(chat)}>
+                  <ListItemText primary='X' />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        </Drawer>
+      </React.Fragment>
       <Box
         sx={{
           display: 'flex',
