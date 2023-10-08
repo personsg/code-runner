@@ -2,5 +2,5 @@
 node_modules/
 state/
 workspaces/
-runner-server/src/tests
+server/src/tests
 ee/
