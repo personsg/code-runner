@@ -1,6 +1,6 @@
 import * as openaillm from './openai'
 import * as ollama from './ollama'
-import { Config, Message } from './runner'
+import { Config, Message } from '../runner'
 import { WebSocket } from 'ws'
 
 

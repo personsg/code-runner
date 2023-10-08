@@ -2,8 +2,8 @@ import { ChatCompletionMessageParam } from 'openai/resources/chat'
 import Execute from './repl'
 import { DATA_PATH, clientSocket } from '.'
 import * as fs from 'fs'
-import { extractCode, llm, getSystemPrompt } from './llm'
-import LTM, { Memory } from './ltm'
+import { extractCode, llm, getSystemPrompt } from './llm/llm'
+import LTM, { Memory } from './memory/ltm'
 require('dotenv').config()
 
 const config: Config = {

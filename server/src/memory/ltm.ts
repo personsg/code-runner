@@ -1,5 +1,5 @@
 // long term memory module
-import { MEMORY_PATH, RUNNER_MODEL } from "."
+import { MEMORY_PATH, RUNNER_MODEL } from ".."
 import { OpenAI } from "langchain/llms/openai";
 import { HNSWLib } from "langchain/vectorstores/hnswlib";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";

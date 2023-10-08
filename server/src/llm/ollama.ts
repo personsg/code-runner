@@ -1,5 +1,5 @@
 import { WebSocket } from 'ws'
-import { Config, Message } from './runner'
+import { Config, Message } from '../runner'
 import * as http from 'http'
 import { ChatCompletionMessageParam } from 'openai/resources/chat'
 import { extractCode as extractCode2 } from './openai'

@@ -1,5 +1,5 @@
 import { ChatCompletionMessageParam } from 'openai/resources/chat'
-import { Config, Message } from './runner'
+import { Config, Message } from '../runner'
 import OpenAI from 'openai'
 import { WebSocket } from 'ws'
 require('dotenv').config()
