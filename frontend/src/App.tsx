@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import './App.css'
 import Markdown from 'markdown-to-jsx'
 import Blocks from './components/Blocks'
-import { Block } from '../../runner-server/src/runner'
+import { Block } from '../../server/src/runner'
 
 function App() {
   const [goal, setGoal] = useState('')
