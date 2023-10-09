@@ -42,7 +42,7 @@ export class Runner {
   public save() {
     const dp = path.join(STATE_PATH, this.chat_id)
     if (!fs.existsSync(dp)) {
-      throw new Error(`Path ${dp} does not exist`)
+      fs.mkdirSync(dp, { recursive: true })
     }
 
     fs.writeFileSync(`${dp}/goal.txt`, this.goal)
