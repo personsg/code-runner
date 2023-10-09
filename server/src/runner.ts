@@ -19,7 +19,7 @@ export class Runner {
   public messages: Message[] = []
   public repl: Execute
   public blocks: Block[] = []
-  public config: Config
+  private config: Config
   public memory: LTM
   public chat_id: string
 
@@ -321,6 +321,42 @@ export class Runner {
         }),
       )
     }
+  }
+
+  public setSystemPrompt(prompt: string) {
+    this.config = {
+      ...this.config,
+      system_prompt: prompt as "chat" | "code-runner",
+    }
+
+    clientSocket.send(
+      JSON.stringify({
+        type: 'config',
+        content: this.config,
+      }),
+    )
+
+    this.save()
+  }
+
+  public setModel(model: string) {
+    this.config = {
+      ...this.config,
+      model,
+    }
+
+    clientSocket.send(
+      JSON.stringify({
+        type: 'config',
+        content: this.config,
+      }),
+    )
+
+    this.save()
+  }
+
+  public getConfig() {
+    return this.config
   }
 }
 

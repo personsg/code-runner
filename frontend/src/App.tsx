@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Box, Button, TextField, Typography, Drawer, List, ListItem, ListItemText, ListItemButton, ListItemIcon, Select, MenuItem } from '@mui/material'
+import { Box, Button, TextField, Typography, Drawer, List, ListItem, ListItemText, ListItemButton, ListItemIcon, Select, MenuItem, Stack } from '@mui/material'
 import Markdown from 'markdown-to-jsx'
 import Blocks from './components/Blocks'
 import { Block, Config } from '../../server/src/runner'
-import React from 'react'
 
 function App() {
   const [goal, setGoal] = useState('')
@@ -98,6 +97,16 @@ function App() {
     }
   }
 
+  const switchModel = (model: string) => {
+    if (socket) {
+      const payload = {
+        type: 'set-model',
+        content: model,
+      }
+      socket.send(JSON.stringify(payload))
+    }
+  }
+
   const resetState = () => {
     setGoal('')
     setGoalSent(false)
@@ -154,41 +163,55 @@ function App() {
 
   return (
     <Box>
-      <React.Fragment>
-        <Button onClick={() => setDrawerOpen(true)}>Chats</Button>
-        <Select
-          sx={{ marginLeft: '10px' }}
-          value={config ? config.system_prompt : ''}
-          onChange={(event) => switchSystemPrompt(event.target.value)}
-        >
-          <MenuItem value='code-runner'>Code Runner</MenuItem>
-          <MenuItem value='chat'>Chat</MenuItem>
-        </Select>
-        <Drawer
-          anchor='left'
-          open={drawerOpen}
-          onClose={() => setDrawerOpen(false)}
-          sx={{
-            width: '300px',
-          }}
-        >
-          <List sx={{ width: 300 }}>
-            {chats.map((chat, index) => (
-              <ListItem disablePadding key={index}>
-                <ListItemButton onClick={() => switchChat(chat)}>
-                  <ListItemIcon>
-                    icon
-                  </ListItemIcon>
-                  <ListItemText primary={chat} />
-                </ListItemButton>
-                <ListItemButton onClick={() => deleteChat(chat)}>
-                  <ListItemText primary='X' />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-        </Drawer>
-      </React.Fragment>
+      <Box sx={{ maxWidth: '200px', position: 'absolute', top: '16px', left: '16px' }}>
+        <Stack direction={"column"} spacing={2}>
+          <Button
+            onClick={() => setDrawerOpen(true)}
+            variant='contained'
+          >Chats</Button>
+          <Select
+            sx={{ marginLeft: '10px' }}
+            value={config ? config.system_prompt : ''}
+            onChange={(event) => switchSystemPrompt(event.target.value)}
+          >
+            <MenuItem value='code-runner'>Code Runner</MenuItem>
+            <MenuItem value='chat'>Chat</MenuItem>
+          </Select>
+          <Select
+            sx={{ marginLeft: '10px' }}
+            value={config ? config.model : ''}
+            onChange={(event) => switchModel(event.target.value)}
+          >
+            <MenuItem value='codellama:7b-instruct'>codellama:7b-instruct</MenuItem>
+            <MenuItem value='codellama:13b-instruct'>codellama:13b-instruct</MenuItem>
+            <MenuItem value='mistral:instruct'>mistral:instruct</MenuItem>
+          </Select>
+          <Drawer
+            anchor='left'
+            open={drawerOpen}
+            onClose={() => setDrawerOpen(false)}
+            sx={{
+              width: '300px',
+            }}
+          >
+            <List sx={{ width: 300 }}>
+              {chats.map((chat, index) => (
+                <ListItem disablePadding key={index}>
+                  <ListItemButton onClick={() => switchChat(chat)}>
+                    <ListItemIcon>
+                      icon
+                    </ListItemIcon>
+                    <ListItemText primary={chat} />
+                  </ListItemButton>
+                  <ListItemButton onClick={() => deleteChat(chat)}>
+                    <ListItemText primary='X' />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </List>
+          </Drawer>
+        </Stack>
+      </Box>
       <Box
         sx={{
           display: 'flex',
@@ -261,31 +284,34 @@ function App() {
         </Box>
         <Box sx={{ height: '80px' }}></Box>
       </Box>
-      {goalSent && (
-        <Box
-          sx={{
-            position: 'fixed',
-            // height: '40px',
-            bottom: '30px',
-            width: '600px',
-            display: 'flex',
-            flexDirection: 'row',
-            // backgroundColor: '#f0f0f0',
-            left: '50%',
-            transform: 'translateX(-50%)',
-          }}
-        >
-          <TextField
-            sx={{ flex: 1, marginRight: '10px' }}
-            type='textarea'
-            value={chatMessage}
-            onChange={e => setChatMessage(e.target.value)}
-            multiline
-          />
-          <Button variant='contained' onClick={sendChatMessage}>Send</Button>
-        </Box>
-      )}
-      {!socket ||
+      {
+        goalSent && (
+          <Box
+            sx={{
+              position: 'fixed',
+              // height: '40px',
+              bottom: '30px',
+              width: '600px',
+              display: 'flex',
+              flexDirection: 'row',
+              // backgroundColor: '#f0f0f0',
+              left: '50%',
+              transform: 'translateX(-50%)',
+            }}
+          >
+            <TextField
+              sx={{ flex: 1, marginRight: '10px' }}
+              type='textarea'
+              value={chatMessage}
+              onChange={e => setChatMessage(e.target.value)}
+              multiline
+            />
+            <Button variant='contained' onClick={sendChatMessage}>Send</Button>
+          </Box>
+        )
+      }
+      {
+        !socket ||
         (socket.readyState !== WebSocket.OPEN && (
           <Typography
             sx={{
@@ -299,8 +325,9 @@ function App() {
           >
             No Connection
           </Typography>
-        ))}
-    </Box>
+        ))
+      }
+    </Box >
   )
 }
 

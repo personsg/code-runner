@@ -30,17 +30,19 @@ wss.on('connection', function connection(ws) {
     } else if (message.type === 'approval') {
       runner.approveCodeBlock()
     } else if (message.type === 'chat') {
-      // if current chat doesn't exist, create a new runner
       if (!runner.chat_id) {
         runner = new Runner()
+        runner.broadcast()
       }
 
       runner.userResponse(message.content)
     } else if (message.type === 'new-chat') {
       runner = new Runner()
+      runner.broadcast()
     } else if (message.type === 'switch-chat') {
       const chat_id = message.content
       runner = new Runner(chat_id)
+      runner.broadcast()
     } else if (message.type === 'list-chats') {
       const chats = fs.readdirSync(STATE_PATH)
       ws.send(
@@ -51,11 +53,6 @@ wss.on('connection', function connection(ws) {
       )
     } else if (message.type === 'delete-chat') {
       const chat_id = message.content
-
-      // if (runner.chat_id === chat_id) {
-      //   runner = new Runner()
-      // }
-
       const chatPath = path.join(STATE_PATH, chat_id)
       if (fs.existsSync(chatPath)) {
         fs.rmSync(chatPath, { recursive: true })
@@ -81,19 +78,13 @@ wss.on('connection', function connection(ws) {
         throw new Error(`System prompt ${message.content} does not exist`)
       }
 
-      runner.config = {
-        ...runner.config,
-        system_prompt: sys_prompt.name as "chat" | "code-runner"
-      }
+      runner.setSystemPrompt(sys_prompt.name)
 
-      console.log('set system prompt', runner.config.system_prompt)
+      console.log('set system prompt', runner.getConfig().system_prompt)
+    } else if (message.type === "set-model") {
+      runner.setModel(message.content)
 
-      clientSocket.send(
-        JSON.stringify({
-          type: 'config',
-          content: runner.config,
-        }),
-      )
+      console.log('set model', runner.getConfig().model)
     }
   })
 
