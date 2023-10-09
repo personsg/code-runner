@@ -213,6 +213,7 @@ function App() {
           value={goal}
           onChange={e => setGoal(e.target.value)}
           disabled={!!goalSent}
+          multiline
         />
         <Button
           sx={{
@@ -279,6 +280,7 @@ function App() {
             type='textarea'
             value={chatMessage}
             onChange={e => setChatMessage(e.target.value)}
+            multiline
           />
           <Button variant='contained' onClick={sendChatMessage}>Send</Button>
         </Box>
