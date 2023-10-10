@@ -3,4 +3,5 @@ node_modules/
 state/
 workspaces/
 server/src/tests
+/config/
 ee/

@@ -7,7 +7,7 @@ import { ollama_system_prompts } from './llm/ollama_system_prompts'
 export const EXECUTION_PATH = path.join(__dirname, '../../workspaces')
 export const STATE_PATH = path.join(__dirname, '../../state')
 export const MEMORY_PATH = path.join(__dirname, '../../state/runner1/memory.db')
-export const GLOBAL_CONFIG_PATH = path.join(__dirname, '../../state/config/config.json')
+export const GLOBAL_CONFIG_PATH = path.join(__dirname, '../../config/config.json')
 
 fs.mkdirSync(path.join(__dirname, '../../config'), { recursive: true })
 
