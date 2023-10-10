@@ -3,7 +3,6 @@ import { Config, Message } from '../runner'
 import * as http from 'http'
 import { ChatCompletionMessageParam } from 'openai/resources/chat'
 import { extractCode as extractCode2 } from './openai'
-import { RUNNER_MODEL } from '..'
 import chalk = require('chalk')
 import { getSystemPrompt } from './llm'
 

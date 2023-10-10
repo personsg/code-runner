@@ -251,12 +251,12 @@ function App() {
         >
           Enter
         </Button>
-        {goalSent && (
-          <Button sx={{ marginLeft: '10px' }} variant='contained' onClick={() => newChat()}>
-            New
-          </Button>
-        )}
       </Box>
+      {goalSent && (
+        <Button sx={{ marginLeft: '10px', position: 'absolute', right: '16px', top: '16px' }} variant='contained' onClick={() => newChat()}>
+          New
+        </Button>
+      )}
       <Box sx={{ maxWidth: '800px', margin: '0 auto', marginTop: '80px' }}>
         {socket && <Blocks blocks={blocks} socket={socket} />}
         <Box>

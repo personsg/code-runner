@@ -1,5 +1,5 @@
 // long term memory module
-import { MEMORY_PATH, RUNNER_MODEL } from ".."
+import { MEMORY_PATH } from ".."
 import { OpenAI } from "langchain/llms/openai";
 import { HNSWLib } from "langchain/vectorstores/hnswlib";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
@@ -19,7 +19,7 @@ class LTM {
 
   constructor() {
     this.embeddings = new OllamaEmbeddings({
-      model: RUNNER_MODEL,
+      model: 'codellama:7b-instruct',
       baseUrl: "http://localhost:11434",
     });
   }

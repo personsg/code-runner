@@ -1,6 +1,6 @@
 import { ChatCompletionMessageParam } from 'openai/resources/chat'
 import Execute from './repl'
-import { EXECUTION_PATH, RUNNER_MODEL, STATE_PATH, clientSocket } from '.'
+import { EXECUTION_PATH, STATE_PATH, clientSocket, GLOBAL_CONFIG_PATH } from '.'
 import * as fs from 'fs'
 import { extractCode, llm, getSystemPrompt } from './llm/llm'
 import LTM, { Memory } from './memory/ltm'
@@ -10,8 +10,8 @@ require('dotenv').config()
 
 const default_config: Config = {
   family: 'local',
-  model: "codellama:13b-instruct",
-  system_prompt: 'code-runner',
+  model: "mistral:instruct",
+  system_prompt: 'chat',
 }
 
 export class Runner {
@@ -25,8 +25,13 @@ export class Runner {
 
   constructor(chat_id?: string) {
     this.repl = new Execute()
-    this.config = default_config
     this.memory = new LTM()
+
+
+    if (fs.existsSync(GLOBAL_CONFIG_PATH)) {
+      this.config = JSON.parse(fs.readFileSync(GLOBAL_CONFIG_PATH, 'utf8'))
+    }
+    this.config = default_config
 
     if (chat_id) {
       this.load(chat_id)
@@ -337,6 +342,8 @@ export class Runner {
     )
 
     this.save()
+    // Save the updated config to the global config path
+    fs.writeFileSync(GLOBAL_CONFIG_PATH, JSON.stringify(this.config))
   }
 
   public setModel(model: string) {
@@ -353,6 +360,8 @@ export class Runner {
     )
 
     this.save()
+    // Save the updated config to the global config path
+    fs.writeFileSync(GLOBAL_CONFIG_PATH, JSON.stringify(this.config))
   }
 
   public getConfig() {
