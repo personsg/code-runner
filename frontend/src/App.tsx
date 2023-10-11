@@ -6,19 +6,28 @@ import { Block, Config } from '../../server/src/runner'
 import ChatDrawer from './components/ChatDrawer'
 import { useWebSocket } from './lib/useWebSocket';
 import { useChat } from './lib/useChat';
+import { useAppWebSocket } from './lib/useAppWebSocket'
+import { Goal } from './components/Goal'
 
 function App() {
-  const [goal, setGoal] = useState('')
-  const [goalSent, setGoalSent] = useState(false)
-  const [blocks, setBlocks] = useState<Block[]>([])
+  const {
+    goal,
+    setGoal,
+    goalSent,
+    setGoalSent,
+    blocks,
+    setBlocks,
+    socket,
+    chats,
+    setChats,
+    listChats,
+    config,
+  } = useAppWebSocket();
+
   const [isStreaming, setIsStreaming] = useState(false)
   const [streamParts, setStreamParts] = useState<any[]>([])
   const [chatMessage, setChatMessage] = useState('')
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [config, setConfig] = useState<Config | null>(null)
-
-  const socket = useWebSocket('ws://localhost:8080');
-  const { chats, setChats, listChats } = useChat(socket);
 
   const sendGoal = (message: string) => {
     if (socket) {
@@ -110,49 +119,6 @@ function App() {
     setStreamParts([])
   }
 
-  useEffect(() => {
-    if (!socket) return
-    socket.onopen = () => {
-      console.log('Connected to the server')
-      listChats()
-    }
-
-    socket.onmessage = event => {
-      const data = JSON.parse(event.data)
-      if (data.type === 'goal') {
-        setGoal(data.content)
-        setGoalSent(true)
-      }
-      if (data.type === 'blocks') {
-        setBlocks(data.blocks)
-        setIsStreaming(false)
-        setStreamParts([])
-        // @ts-ignore for debug
-        globalThis.Blocks = data.blocks
-      }
-      if (data.type === 'new-stream') {
-        setIsStreaming(true)
-      }
-      if (data.type === 'part') {
-        setStreamParts(prev => [...prev, data.part])
-      }
-      if (data.type === 'list-chats') {
-        setChats(data.content)
-      }
-      if (data.type === "delete-chat") {
-        listChats()
-      }
-      if (data.type === 'config') {
-        console.log('setting config', data.content)
-        setConfig(data.content)
-      }
-    }
-
-    return () => {
-      socket.close()
-    }
-  }, [socket])
-
   return (
     <Box>
       <Box sx={{ maxWidth: '200px', position: 'absolute', top: '16px', left: '16px' }}>
@@ -186,46 +152,12 @@ function App() {
           />
         </Stack>
       </Box>
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'absolute',
-          top: goalSent ? '40px' : '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          transition: 'top 0.7s ease-out',
-        }}
-      >
-        <TextField
-          sx={{
-            width: goalSent ? '600px' : '400px',
-            // height: '33px',
-            // border: '1px solid black',
-            transition: 'width 0.7s ease-out',
-          }}
-          type='text'
-          value={goal}
-          onChange={e => setGoal(e.target.value)}
-          disabled={!!goalSent}
-          multiline
-        />
-        <Button
-          sx={{
-            marginLeft: '10px',
-            // height: 'calc(33px + 2px)',
-            // border: '1px solid black',
-            visibility: goalSent ? 'hidden' : 'visible',
-          }}
-          variant='contained'
-          onClick={() => sendGoal(goal)}
-          disabled={!!goalSent}
-        >
-          Enter
-        </Button>
-      </Box>
+      <Goal
+        goal={goal}
+        setGoal={setGoal}
+        goalSent={goalSent}
+        sendGoal={sendGoal}
+      />
       {goalSent && (
         <Button sx={{ marginLeft: '10px', position: 'absolute', right: '16px', top: '16px' }} variant='contained' onClick={() => newChat()}>
           New
