@@ -1,165 +1,78 @@
-import { useEffect, useState } from 'react'
-import { Box, Button, TextField, Typography, Drawer, List, ListItem, ListItemText, ListItemButton, ListItemIcon, Select, MenuItem, Stack } from '@mui/material'
+import { useState } from 'react'
+import { Box, Button, TextField, Typography, Select, MenuItem, Stack } from '@mui/material'
 import Markdown from 'markdown-to-jsx'
 import Blocks from './components/Blocks'
-import { Block, Config } from '../../server/src/runner'
+import { Block } from '../../server/src/runner'
+import ChatDrawer from './components/ChatDrawer'
+import { useAppWebSocket } from './lib/useAppWebSocket'
+import { Goal } from './components/Goal'
 
 function App() {
-  const [goal, setGoal] = useState('')
-  const [goalSent, setGoalSent] = useState(false)
-  const [socket, setSocket] = useState<WebSocket | null>(null)
-  const [blocks, setBlocks] = useState<Block[]>([])
-  const [isStreaming, setIsStreaming] = useState(false)
-  const [streamParts, setStreamParts] = useState<any[]>([])
+  const {
+    goal,
+    setGoal,
+    goalSent,
+    setGoalSent,
+    blocks,
+    setBlocks,
+    socket,
+    chats,
+    config,
+    resetState,
+    isStreaming,
+    streamParts
+  } = useAppWebSocket();
+
   const [chatMessage, setChatMessage] = useState('')
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [chats, setChats] = useState<string[]>([])
-  const [config, setConfig] = useState<Config | null>(null)
 
-  const sendGoal = (message: string) => {
+  const sendPayload = (type: string, content: string) => {
     if (socket) {
       const payload = {
-        type: 'goal',
-        content: message,
+        type,
+        content,
       }
-      setGoalSent(true)
       socket.send(JSON.stringify(payload))
     }
   }
 
+  const sendGoal = (message: string) => {
+    sendPayload('goal', message);
+    setGoalSent(true);
+  }
+
   const sendChatMessage = () => {
-    // optimistic update
     const block: Block = {
       type: 'user',
       content: chatMessage,
     }
     setBlocks(prev => [...prev, block])
-
-    if (socket) {
-      const payload = {
-        type: 'chat',
-        content: chatMessage,
-      }
-      socket.send(JSON.stringify(payload))
-      setChatMessage('')
-    }
+    sendPayload('chat', chatMessage);
+    setChatMessage('')
   }
 
   const newChat = () => {
     if (confirm('Are you sure you want to start a new chat?')) {
-      if (socket) {
-        const payload = {
-          type: 'new-chat',
-          content: '',
-        }
-        socket.send(JSON.stringify(payload))
-        resetState()
-      }
+      sendPayload('new-chat', '');
+      resetState()
     }
   }
 
   const switchChat = (chat_id: string) => {
-    if (socket) {
-      const payload = {
-        type: 'switch-chat',
-        content: chat_id,
-      }
-      socket.send(JSON.stringify(payload))
-    }
-  }
-
-  const listChats = () => {
-    if (socket) {
-      const payload = {
-        type: 'list-chats',
-      }
-      socket.send(JSON.stringify(payload))
-    }
+    sendPayload('switch-chat', chat_id);
   }
 
   const deleteChat = (chat_id: string) => {
-    if (socket) {
-      const payload = {
-        type: 'delete-chat',
-        content: chat_id
-      }
-      socket.send(JSON.stringify(payload))
-    }
+    sendPayload('delete-chat', chat_id);
   }
 
   const switchSystemPrompt = (prompt: string) => {
-    if (socket) {
-      const payload = {
-        type: 'set-system-prompt',
-        content: prompt,
-      }
-      socket.send(JSON.stringify(payload))
-    }
+    sendPayload('set-system-prompt', prompt);
   }
 
   const switchModel = (model: string) => {
-    if (socket) {
-      const payload = {
-        type: 'set-model',
-        content: model,
-      }
-      socket.send(JSON.stringify(payload))
-    }
+    sendPayload('set-model', model);
   }
-
-  const resetState = () => {
-    setGoal('')
-    setGoalSent(false)
-    setBlocks([])
-    setIsStreaming(false)
-    setStreamParts([])
-  }
-
-  useEffect(() => {
-    const socket = new WebSocket('ws://localhost:8080')
-
-    setSocket(socket)
-
-    socket.onopen = () => {
-      console.log('Connected to the server')
-      listChats()
-    }
-
-    socket.onmessage = event => {
-      const data = JSON.parse(event.data)
-      if (data.type === 'goal') {
-        setGoal(data.content)
-        setGoalSent(true)
-      }
-      if (data.type === 'blocks') {
-        setBlocks(data.blocks)
-        setIsStreaming(false)
-        setStreamParts([])
-        // @ts-ignore for debug
-        globalThis.Blocks = data.blocks
-      }
-      if (data.type === 'new-stream') {
-        setIsStreaming(true)
-      }
-      if (data.type === 'part') {
-        setStreamParts(prev => [...prev, data.part])
-      }
-      if (data.type === 'list-chats') {
-        setChats(data.content)
-      }
-      if (data.type === "delete-chat") {
-        listChats()
-      }
-      if (data.type === 'config') {
-        console.log('setting config', data.content)
-        setConfig(data.content)
-      }
-    }
-
-    return () => {
-      socket.close()
-    }
-  }, [])
 
   return (
     <Box>
@@ -186,72 +99,20 @@ function App() {
             <MenuItem value='codellama:13b-instruct'>codellama:13b-instruct</MenuItem>
             <MenuItem value='mistral:instruct'>mistral:instruct</MenuItem>
           </Select>
-          <Drawer
-            anchor='left'
-            open={drawerOpen}
-            onClose={() => setDrawerOpen(false)}
-            sx={{
-              width: '300px',
-            }}
-          >
-            <List sx={{ width: 300 }}>
-              {chats.map((chat, index) => (
-                <ListItem disablePadding key={index}>
-                  <ListItemButton onClick={() => switchChat(chat)}>
-                    <ListItemIcon>
-                      icon
-                    </ListItemIcon>
-                    <ListItemText primary={chat} />
-                  </ListItemButton>
-                  <ListItemButton onClick={() => deleteChat(chat)}>
-                    <ListItemText primary='X' />
-                  </ListItemButton>
-                </ListItem>
-              ))}
-            </List>
-          </Drawer>
+          <ChatDrawer
+            chats={chats}
+            switchChat={switchChat}
+            deleteChat={deleteChat}
+            drawerOpen={drawerOpen}
+          />
         </Stack>
       </Box>
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'absolute',
-          top: goalSent ? '40px' : '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          transition: 'top 0.7s ease-out',
-        }}
-      >
-        <TextField
-          sx={{
-            width: goalSent ? '600px' : '400px',
-            // height: '33px',
-            // border: '1px solid black',
-            transition: 'width 0.7s ease-out',
-          }}
-          type='text'
-          value={goal}
-          onChange={e => setGoal(e.target.value)}
-          disabled={!!goalSent}
-          multiline
-        />
-        <Button
-          sx={{
-            marginLeft: '10px',
-            // height: 'calc(33px + 2px)',
-            // border: '1px solid black',
-            visibility: goalSent ? 'hidden' : 'visible',
-          }}
-          variant='contained'
-          onClick={() => sendGoal(goal)}
-          disabled={!!goalSent}
-        >
-          Enter
-        </Button>
-      </Box>
+      <Goal
+        goal={goal}
+        setGoal={setGoal}
+        goalSent={goalSent}
+        sendGoal={sendGoal}
+      />
       {goalSent && (
         <Button sx={{ marginLeft: '10px', position: 'absolute', right: '16px', top: '16px' }} variant='contained' onClick={() => newChat()}>
           New
@@ -289,12 +150,10 @@ function App() {
           <Box
             sx={{
               position: 'fixed',
-              // height: '40px',
               bottom: '30px',
               width: '600px',
               display: 'flex',
               flexDirection: 'row',
-              // backgroundColor: '#f0f0f0',
               left: '50%',
               transform: 'translateX(-50%)',
             }}
