@@ -8,7 +8,7 @@ const MAX_DEPTH = 100
 let CALLS = 0
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY || "",
 })
 
 export async function llm(inputMessages: Message[], config: Config, clientSocket?: WebSocket) {
