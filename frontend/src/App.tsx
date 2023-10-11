@@ -1,11 +1,9 @@
-import { useEffect, useState } from 'react'
-import { Box, Button, TextField, Typography, Drawer, List, ListItem, ListItemText, ListItemButton, ListItemIcon, Select, MenuItem, Stack } from '@mui/material'
+import { useState } from 'react'
+import { Box, Button, TextField, Typography, Select, MenuItem, Stack } from '@mui/material'
 import Markdown from 'markdown-to-jsx'
 import Blocks from './components/Blocks'
-import { Block, Config } from '../../server/src/runner'
+import { Block } from '../../server/src/runner'
 import ChatDrawer from './components/ChatDrawer'
-import { useWebSocket } from './lib/useWebSocket';
-import { useChat } from './lib/useChat';
 import { useAppWebSocket } from './lib/useAppWebSocket'
 import { Goal } from './components/Goal'
 
@@ -19,104 +17,61 @@ function App() {
     setBlocks,
     socket,
     chats,
-    setChats,
-    listChats,
     config,
+    resetState,
+    isStreaming,
+    streamParts
   } = useAppWebSocket();
 
-  const [isStreaming, setIsStreaming] = useState(false)
-  const [streamParts, setStreamParts] = useState<any[]>([])
   const [chatMessage, setChatMessage] = useState('')
   const [drawerOpen, setDrawerOpen] = useState(false)
 
-  const sendGoal = (message: string) => {
+  const sendPayload = (type: string, content: string) => {
     if (socket) {
       const payload = {
-        type: 'goal',
-        content: message,
+        type,
+        content,
       }
-      setGoalSent(true)
       socket.send(JSON.stringify(payload))
     }
   }
 
+  const sendGoal = (message: string) => {
+    sendPayload('goal', message);
+    setGoalSent(true);
+  }
+
   const sendChatMessage = () => {
-    // optimistic update
     const block: Block = {
       type: 'user',
       content: chatMessage,
     }
     setBlocks(prev => [...prev, block])
-
-    if (socket) {
-      const payload = {
-        type: 'chat',
-        content: chatMessage,
-      }
-      socket.send(JSON.stringify(payload))
-      setChatMessage('')
-    }
+    sendPayload('chat', chatMessage);
+    setChatMessage('')
   }
 
   const newChat = () => {
     if (confirm('Are you sure you want to start a new chat?')) {
-      if (socket) {
-        const payload = {
-          type: 'new-chat',
-          content: '',
-        }
-        socket.send(JSON.stringify(payload))
-        resetState()
-      }
+      sendPayload('new-chat', '');
+      resetState()
     }
   }
 
   const switchChat = (chat_id: string) => {
-    if (socket) {
-      const payload = {
-        type: 'switch-chat',
-        content: chat_id,
-      }
-      socket.send(JSON.stringify(payload))
-    }
+    sendPayload('switch-chat', chat_id);
   }
 
   const deleteChat = (chat_id: string) => {
-    if (socket) {
-      const payload = {
-        type: 'delete-chat',
-        content: chat_id
-      }
-      socket.send(JSON.stringify(payload))
-    }
+    sendPayload('delete-chat', chat_id);
   }
 
   const switchSystemPrompt = (prompt: string) => {
-    if (socket) {
-      const payload = {
-        type: 'set-system-prompt',
-        content: prompt,
-      }
-      socket.send(JSON.stringify(payload))
-    }
+    sendPayload('set-system-prompt', prompt);
   }
 
   const switchModel = (model: string) => {
-    if (socket) {
-      const payload = {
-        type: 'set-model',
-        content: model,
-      }
-      socket.send(JSON.stringify(payload))
-    }
-  }
-
-  const resetState = () => {
-    setGoal('')
-    setGoalSent(false)
-    setBlocks([])
-    setIsStreaming(false)
-    setStreamParts([])
+    sendPayload('set-model', model);
   }
 
   return (
@@ -195,12 +150,10 @@ function App() {
           <Box
             sx={{
               position: 'fixed',
-              // height: '40px',
               bottom: '30px',
               width: '600px',
               display: 'flex',
               flexDirection: 'row',
-              // backgroundColor: '#f0f0f0',
               left: '50%',
               transform: 'translateX(-50%)',
             }}

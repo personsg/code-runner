@@ -13,6 +13,14 @@ export const useAppWebSocket = () => {
   const { chats, setChats, listChats } = useChat(socket);
   const [config, setConfig] = useState<Config | null>(null)
 
+  const resetState = () => {
+    setGoal('')
+    setGoalSent(false)
+    setBlocks([])
+    setIsStreaming(false)
+    setStreamParts([])
+  }
+
   useEffect(() => {
     if (!socket) return;
     socket.onopen = () => {
@@ -73,5 +81,6 @@ export const useAppWebSocket = () => {
     setChats,
     listChats,
     config,
+    resetState,
   };
 };
