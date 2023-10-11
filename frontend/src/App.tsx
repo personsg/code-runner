@@ -6,8 +6,12 @@ import { Block } from '../../server/src/runner'
 import ChatDrawer from './components/ChatDrawer'
 import { useAppWebSocket } from './lib/useAppWebSocket'
 import { Goal } from './components/Goal'
+import { useSelector } from 'react-redux'
+import { RootState } from './lib/store'
+import { ImageUploader } from './components/ImageUploader'
 
 function App() {
+  const appState = useSelector((state: RootState) => state.appState);
   const {
     goal,
     setGoal,
@@ -104,6 +108,7 @@ function App() {
             switchChat={switchChat}
             deleteChat={deleteChat}
             drawerOpen={drawerOpen}
+            setDrawerOpen={setDrawerOpen}
           />
         </Stack>
       </Box>
@@ -158,6 +163,9 @@ function App() {
               transform: 'translateX(-50%)',
             }}
           >
+            {appState.experiments.includes('llava') && (
+              <ImageUploader />
+            )}
             <TextField
               sx={{ flex: 1, marginRight: '10px' }}
               type='textarea'

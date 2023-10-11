@@ -3,5 +3,7 @@ node_modules/
 state/
 workspaces/
 server/src/tests
+server/uploads/
+server/output.txt
 /config/
 ee/

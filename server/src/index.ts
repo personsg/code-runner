@@ -3,6 +3,9 @@ import { Runner } from './runner'
 import * as path from 'path'
 import * as fs from 'fs'
 import { ollama_system_prompts } from './llm/ollama_system_prompts'
+import * as express from 'express';
+import * as multer from 'multer';
+import { captionImage } from './multimodal/llava'
 
 export const EXECUTION_PATH = path.join(__dirname, '../../workspaces')
 export const STATE_PATH = path.join(__dirname, '../../state')
@@ -12,6 +15,34 @@ export const GLOBAL_CONFIG_PATH = path.join(__dirname, '../../config/config.json
 fs.mkdirSync(path.join(__dirname, '../../config'), { recursive: true })
 
 let runner = new Runner()
+
+const app = express();
+let storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, './uploads')
+  },
+  filename: function (req, file, cb) {
+    let extArray = file.mimetype.split("/");
+    let extension = extArray[extArray.length - 1];
+    cb(null, file.fieldname + '-' + Date.now() + '.' + extension)
+  }
+})
+const upload = multer({ storage: storage })
+
+app.post('/upload-image', upload.single('image'), async (req, res) => {
+  res.send('Image uploaded successfully.');
+
+  const imagePath = req.file.path
+  const caption = await captionImage(imagePath)
+
+  if (runner) {
+    runner.addMultiModalBlock(caption)
+  }
+});
+
+app.listen(8081, () => {
+  console.log('HTTP server listening on port 8081');
+});
 
 const wss = new WebSocketServer({
   port: 8080,

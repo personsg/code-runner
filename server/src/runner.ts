@@ -40,7 +40,7 @@ export class Runner {
       this.chat_id = crypto.randomBytes(8).toString('hex')
       fs.mkdirSync(path.join(EXECUTION_PATH, this.chat_id), { recursive: true })
       fs.mkdirSync(path.join(STATE_PATH, this.chat_id), { recursive: true })
-      process.chdir(path.join(EXECUTION_PATH, this.chat_id))
+      // process.chdir(path.join(EXECUTION_PATH, this.chat_id))
     }
   }
 
@@ -128,6 +128,21 @@ export class Runner {
     // })
     this.save()
     this.loop()
+  }
+
+  public addMultiModalBlock(message: string) {
+    this.messages.push({
+      role: 'user',
+      content: `The user uploaded an image with the following description: \n ${message}`
+    })
+
+    this.blocks.push({
+      type: 'user',
+      content: `The user uploaded an image with the following description: \n ${message}`
+    })
+
+    this.save()
+    this.broadcast()
   }
 
   public async loop() {
