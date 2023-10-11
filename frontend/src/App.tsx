@@ -3,18 +3,22 @@ import { Box, Button, TextField, Typography, Drawer, List, ListItem, ListItemTex
 import Markdown from 'markdown-to-jsx'
 import Blocks from './components/Blocks'
 import { Block, Config } from '../../server/src/runner'
+import ChatDrawer from './components/ChatDrawer'
+import { useWebSocket } from './lib/useWebSocket';
+import { useChat } from './lib/useChat';
 
 function App() {
   const [goal, setGoal] = useState('')
   const [goalSent, setGoalSent] = useState(false)
-  const [socket, setSocket] = useState<WebSocket | null>(null)
   const [blocks, setBlocks] = useState<Block[]>([])
   const [isStreaming, setIsStreaming] = useState(false)
   const [streamParts, setStreamParts] = useState<any[]>([])
   const [chatMessage, setChatMessage] = useState('')
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [chats, setChats] = useState<string[]>([])
   const [config, setConfig] = useState<Config | null>(null)
+
+  const socket = useWebSocket('ws://localhost:8080');
+  const { chats, setChats, listChats } = useChat(socket);
 
   const sendGoal = (message: string) => {
     if (socket) {
@@ -68,15 +72,6 @@ function App() {
     }
   }
 
-  const listChats = () => {
-    if (socket) {
-      const payload = {
-        type: 'list-chats',
-      }
-      socket.send(JSON.stringify(payload))
-    }
-  }
-
   const deleteChat = (chat_id: string) => {
     if (socket) {
       const payload = {
@@ -116,10 +111,7 @@ function App() {
   }
 
   useEffect(() => {
-    const socket = new WebSocket('ws://localhost:8080')
-
-    setSocket(socket)
-
+    if (!socket) return
     socket.onopen = () => {
       console.log('Connected to the server')
       listChats()
@@ -159,7 +151,7 @@ function App() {
     return () => {
       socket.close()
     }
-  }, [])
+  }, [socket])
 
   return (
     <Box>
@@ -186,30 +178,12 @@ function App() {
             <MenuItem value='codellama:13b-instruct'>codellama:13b-instruct</MenuItem>
             <MenuItem value='mistral:instruct'>mistral:instruct</MenuItem>
           </Select>
-          <Drawer
-            anchor='left'
-            open={drawerOpen}
-            onClose={() => setDrawerOpen(false)}
-            sx={{
-              width: '300px',
-            }}
-          >
-            <List sx={{ width: 300 }}>
-              {chats.map((chat, index) => (
-                <ListItem disablePadding key={index}>
-                  <ListItemButton onClick={() => switchChat(chat)}>
-                    <ListItemIcon>
-                      icon
-                    </ListItemIcon>
-                    <ListItemText primary={chat} />
-                  </ListItemButton>
-                  <ListItemButton onClick={() => deleteChat(chat)}>
-                    <ListItemText primary='X' />
-                  </ListItemButton>
-                </ListItem>
-              ))}
-            </List>
-          </Drawer>
+          <ChatDrawer
+            chats={chats}
+            switchChat={switchChat}
+            deleteChat={deleteChat}
+            drawerOpen={drawerOpen}
+          />
         </Stack>
       </Box>
       <Box
