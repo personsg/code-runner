@@ -6,6 +6,7 @@ import { ollama_system_prompts } from './llm/ollama_system_prompts'
 import * as express from 'express';
 import * as multer from 'multer';
 import { captionImage } from './multimodal/llava'
+import { llm, getAvailableModels } from './llm/llm'
 
 export const EXECUTION_PATH = path.join(__dirname, '../../workspaces')
 export const STATE_PATH = path.join(__dirname, '../../state')
@@ -17,6 +18,12 @@ fs.mkdirSync(path.join(__dirname, '../../config'), { recursive: true })
 let runner = new Runner()
 
 const app = express();
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+})
+
 let storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, './uploads')
@@ -39,6 +46,12 @@ app.post('/upload-image', upload.single('image'), async (req, res) => {
     runner.addMultiModalBlock(caption)
   }
 });
+
+app.get('/models', async (req, res) => {
+  const models = await getAvailableModels()
+
+  res.send(models)
+})
 
 app.listen(8081, () => {
   console.log('HTTP server listening on port 8081');

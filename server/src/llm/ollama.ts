@@ -38,6 +38,30 @@ export async function llm(
   }
 }
 
+export async function getAvailableModels() {
+  return new Promise<{ name: string }[]>((resolve, reject) => {
+    const options = {
+      hostname: 'localhost',
+      port: 11434,
+      path: '/api/tags',
+      method: 'GET',
+    }
+
+    const req = http.request(options, res => {
+      res.on('data', chunk => {
+        const content = JSON.parse(chunk.toString())
+        resolve(content.models)
+      })
+    })
+
+    req.on('error', error => {
+      console.error(error)
+    })
+
+    req.end()
+  })
+}
+
 async function post(prompt: string, config: Config, clientSocket?: WebSocket): Promise<string> {
   if (!config.model) {
     throw new Error('No model specified')

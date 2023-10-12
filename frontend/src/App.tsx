@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Box, Button, TextField, Typography, Select, MenuItem, Stack } from '@mui/material'
 import Markdown from 'markdown-to-jsx'
 import Blocks from './components/Blocks'
@@ -29,6 +29,13 @@ function App() {
 
   const [chatMessage, setChatMessage] = useState('')
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [models, setModels] = useState<{ name: string }[]>([])
+
+  useEffect(() => {
+    fetch('http://localhost:8081/models').then(e => e.json()).then(e => {
+      setModels(e)
+    })
+  }, [])
 
   const sendPayload = (type: string, content: string) => {
     if (socket) {
@@ -99,9 +106,9 @@ function App() {
             value={config ? config.model : ''}
             onChange={(event) => switchModel(event.target.value)}
           >
-            <MenuItem value='codellama:7b-instruct'>codellama:7b-instruct</MenuItem>
-            <MenuItem value='codellama:13b-instruct'>codellama:13b-instruct</MenuItem>
-            <MenuItem value='mistral:instruct'>mistral:instruct</MenuItem>
+            {models.map(e => (
+              <MenuItem key={e.name} value={e.name}>{e.name}</MenuItem>
+            ))}
           </Select>
           <ChatDrawer
             chats={chats}

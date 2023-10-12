@@ -4,7 +4,6 @@ import { Config, Message } from '../runner'
 import { WebSocket } from 'ws'
 import { ollama_system_prompts } from './ollama_system_prompts'
 
-
 // TODO move this all to an adapter system
 export async function llm(inputMessages: Message[], config: Config, clientSocket?: WebSocket) {
   console.log(`llm call ${config.family} ${config.model}`)
@@ -17,6 +16,14 @@ export async function llm(inputMessages: Message[], config: Config, clientSocket
   else {
     throw new Error(`Unknown model family ${config.family}`)
   }
+}
+
+export async function getAvailableModels() {
+  const ollama_models = await ollama.getAvailableModels()
+
+  return ollama_models.map(e => ({
+    name: e.name
+  }))
 }
 
 export function extractCode(content: string, config: Config) {
