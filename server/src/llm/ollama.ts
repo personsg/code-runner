@@ -47,6 +47,7 @@ async function post(prompt: string, config: Config, clientSocket?: WebSocket): P
     const postData = JSON.stringify({
       model: config.model,
       prompt: prompt,
+      template: "{{ .Prompt }}",
     })
 
     const options = {
