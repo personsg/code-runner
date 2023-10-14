@@ -34,7 +34,7 @@ export const Goal: React.FC<Props> = ({ goal, setGoal, goalSent, sendGoal }) => 
         value={goal}
         onChange={e => setGoal(e.target.value)}
         disabled={!!goalSent}
-        multiline
+        multiline={!goalSent}
       />
       <Button
         sx={{
