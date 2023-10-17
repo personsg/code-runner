@@ -6,7 +6,7 @@ import { extractCode, llm, getSystemPrompt } from './llm/llm'
 import LTM, { Memory } from './memory/ltm'
 import * as crypto from 'crypto'
 import * as path from 'path'
-import { executeWorkflow, handleApprovedCode } from './workflows/runnerWorkflow'
+import { trigger_UserMessage, trigger_CodeApprovalButton } from './workflows/runnerWorkflow'
 require('dotenv').config()
 
 const default_config: Config = {
@@ -91,7 +91,7 @@ export class Runner {
   }
 
   public async handleNewUserMessage(message: Message) {
-    executeWorkflow({
+    trigger_UserMessage({
       clientSocket,
     },
       {
@@ -124,7 +124,7 @@ export class Runner {
   }
 
   public async handleApprovedCode() {
-    handleApprovedCode(
+    trigger_CodeApprovalButton(
       {
         clientSocket,
       },

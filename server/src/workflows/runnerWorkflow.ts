@@ -4,7 +4,7 @@ import { Block, Config, Message } from "../runner";
 import Execute from "../repl";
 import { exec } from "child_process";
 
-export async function executeWorkflow(
+export async function trigger_UserMessage(
   context: {
     clientSocket: WebSocket
   },
@@ -101,7 +101,7 @@ export async function executeWorkflow(
   plugins.system.save()
 }
 
-export async function handleApprovedCode(
+export async function trigger_CodeApprovalButton(
   context: {
     clientSocket: WebSocket
   },
@@ -159,7 +159,7 @@ export async function handleApprovedCode(
         }),
       )
 
-      return executeWorkflow(context, plugins, {
+      return trigger_UserMessage(context, plugins, {
         role: 'function',
         name: 'run_code',
         content: String(res) === '' ? 'No Output' : String(res)
