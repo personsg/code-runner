@@ -5,6 +5,7 @@ import { ChatCompletionMessageParam } from 'openai/resources/chat'
 import { extractCode as extractCode2 } from './openai'
 import chalk = require('chalk')
 import { getSystemPrompt } from './llm'
+import { buildPrompt } from './ollamaBuildPrompt'
 
 export async function llm(
   inputMessages: Message[],
@@ -13,7 +14,7 @@ export async function llm(
 ): Promise<ChatCompletionMessageParam> {
   const sys_prompt = getSystemPrompt(config)
 
-  const prompt = build_prompt(inputMessages, sys_prompt)
+  const prompt = buildPrompt(inputMessages, { role: 'system', content: sys_prompt }, config.model)
 
   const res = await post(prompt, config, clientSocket)
 
@@ -152,31 +153,4 @@ export function extractCodeFromLLMResponse(content: string) {
     const code_block = code_blocks[0].replace(/```/g, '')
     return code_block
   }
-}
-
-const build_prompt = (messages: Message[], system_prompt: string) => {
-  const prompt = `[INST] <<SYS>>
-${system_prompt}
-<</SYS>>
-
-${messages
-      .map((e, i) => {
-        if (e.role === 'user') {
-          if (i === 1) {
-            return e.content + ' [/INST]\n'
-          } else {
-            return '[INST] ' + e.content + ' [/INST]\n'
-          }
-        } else if (e.role === 'system') {
-          return null
-        } else {
-          return ' ' + e.content.trim() + '\n'
-        }
-      })
-      .filter(e => e)
-      .join('')}
-`
-
-  console.log(chalk.blue(prompt))
-  return prompt
 }
