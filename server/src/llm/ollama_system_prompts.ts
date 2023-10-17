@@ -31,14 +31,7 @@ const OLLAMA_CHAT = `You are a helpful AI assistant. You are capable of anything
 8. After your response, you can ask a question to the user to keep the conversation going. If you ask a question, it should be thought provoking, relevant to the conversation, and help the user either think about the problem in a different way, or get helpful context to help you answer the question in future responses.
 9. Any code should be returned markdown style, starting on a new line and inside three backticks \`\`\``
 
-export const ollama_system_prompts = [
-  {
-    name: 'code-runner',
-    prompt: OLLAMA_CODE_RUNNER,
-  },
-  {
-    name: 'chat',
-    prompt: OLLAMA_CHAT,
-  },
-
-]
+export const ollama_system_prompts = {
+  'code-runner': OLLAMA_CODE_RUNNER,
+  'chat': OLLAMA_CHAT,
+}

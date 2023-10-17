@@ -12,7 +12,7 @@ require('dotenv').config()
 const default_config: Config = {
   family: 'local',
   model: "mistral:instruct",
-  system_prompt: 'chat',
+  workflow_name: 'chat',
 }
 
 export class Runner {
@@ -196,21 +196,19 @@ export class Runner {
     }
   }
 
-  public setSystemPrompt(prompt: string) {
+  public setWorkflow(workflow_name: string) {
     this.config = {
       ...this.config,
-      system_prompt: prompt as "chat" | "code-runner",
+      workflow_name: workflow_name
     }
 
     clientSocket.send(
       JSON.stringify({
         type: 'config',
-        content: this.config,
-      }),
+        content: this.config
+      })
     )
 
-    this.save()
-    // Save the updated config to the global config path
     fs.writeFileSync(GLOBAL_CONFIG_PATH, JSON.stringify(this.config))
   }
 
@@ -291,5 +289,5 @@ export type Block =
 export type Config = {
   family: "local" | "openai"
   model: string,
-  system_prompt: 'code-runner' | 'chat'
+  workflow_name: string
 }

@@ -7,11 +7,14 @@ import * as express from 'express';
 import * as multer from 'multer';
 import { captionImage } from './multimodal/llava'
 import { llm, getAvailableModels } from './llm/llm'
+import WorkflowList from './workflows'
 
 export const EXECUTION_PATH = path.join(__dirname, '../../workspaces')
 export const STATE_PATH = path.join(__dirname, '../../state')
 export const MEMORY_PATH = path.join(__dirname, '../../state/runner1/memory.db')
 export const GLOBAL_CONFIG_PATH = path.join(__dirname, '../../config/config.json')
+
+const workflows = WorkflowList
 
 fs.mkdirSync(path.join(__dirname, '../../config'), { recursive: true })
 
@@ -123,16 +126,16 @@ wss.on('connection', function connection(ws) {
           }),
         )
       }
-    } else if (message.type === "set-system-prompt") {
-      const sys_prompt = ollama_system_prompts.find(p => p.name === message.content)
+    } else if (message.type === "set-workflow") {
+      const workflow = WorkflowList[message.content]
 
-      if (!sys_prompt) {
+      if (!workflow) {
         throw new Error(`System prompt ${message.content} does not exist`)
       }
 
-      runner.setSystemPrompt(sys_prompt.name)
+      runner.setWorkflow(message.content)
 
-      console.log('set system prompt', runner.getConfig().system_prompt)
+      console.log('set workflow ', runner.getConfig().workflow_name)
     } else if (message.type === "set-model") {
       runner.setModel(message.content)
 

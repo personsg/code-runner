@@ -77,8 +77,8 @@ function App() {
     sendPayload('delete-chat', chat_id);
   }
 
-  const switchSystemPrompt = (prompt: string) => {
-    sendPayload('set-system-prompt', prompt);
+  const switchWorkflow = (workflow: string) => {
+    sendPayload('set-workflow', workflow);
   }
 
   const switchModel = (model: string) => {
@@ -95,8 +95,8 @@ function App() {
           >Chats</Button>
           <Select
             sx={{ marginLeft: '10px' }}
-            value={config ? config.system_prompt : ''}
-            onChange={(event) => switchSystemPrompt(event.target.value)}
+            value={config ? config.workflow_name : ''}
+            onChange={(event) => switchWorkflow(event.target.value)}
           >
             <MenuItem value='code-runner'>Code Runner</MenuItem>
             <MenuItem value='chat'>Chat</MenuItem>
