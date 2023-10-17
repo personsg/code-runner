@@ -32,7 +32,9 @@ export class Runner {
     if (fs.existsSync(GLOBAL_CONFIG_PATH)) {
       this.config = JSON.parse(fs.readFileSync(GLOBAL_CONFIG_PATH, 'utf8'))
     }
-    this.config = default_config
+    else {
+      this.config = default_config
+    }
 
     if (chat_id) {
       this.load(chat_id)

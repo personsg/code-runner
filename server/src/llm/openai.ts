@@ -73,6 +73,14 @@ export async function llm(inputMessages: Message[], config: Config, clientSocket
     .filter(e => e)
     .join('')
 
+  if (clientSocket) {
+    clientSocket.send(
+      JSON.stringify({
+        type: 'end-stream',
+      }),
+    )
+  }
+
   return {
     role: 'assistant',
     content: content,

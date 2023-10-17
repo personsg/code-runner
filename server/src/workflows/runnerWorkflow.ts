@@ -97,6 +97,8 @@ export async function executeWorkflow(
       })
     }
   }
+
+  plugins.system.save()
 }
 
 export async function handleApprovedCode(

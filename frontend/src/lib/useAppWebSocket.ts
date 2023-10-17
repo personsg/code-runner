@@ -36,13 +36,15 @@ export const useAppWebSocket = () => {
       }
       if (data.type === 'blocks') {
         setBlocks(data.blocks)
-        setIsStreaming(false)
-        setStreamParts([])
         // @ts-ignore for debug
         globalThis.Blocks = data.blocks
       }
       if (data.type === 'new-stream') {
         setIsStreaming(true)
+      }
+      if (data.type === 'end-stream') {
+        setIsStreaming(false)
+        setStreamParts([])
       }
       if (data.type === 'part') {
         setStreamParts(prev => [...prev, data.part])
@@ -73,7 +75,6 @@ export const useAppWebSocket = () => {
     blocks,
     setBlocks,
     isStreaming,
-    setIsStreaming,
     streamParts,
     setStreamParts,
     socket,

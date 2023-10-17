@@ -117,6 +117,13 @@ async function post(prompt: string, config: Config, clientSocket?: WebSocket): P
 
       res.on('end', () => {
         console.log(parts.join(''))
+        if (clientSocket) {
+          clientSocket.send(
+            JSON.stringify({
+              type: 'end-stream',
+            }),
+          )
+        }
         resolve(parts.join(''))
       })
     })
