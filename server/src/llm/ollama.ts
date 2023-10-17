@@ -148,7 +148,7 @@ export function extractCodeFromLLMResponse(content: string) {
 }
 
 const build_prompt = (messages: Message[], system_prompt: string) => {
-  const prompt = `<s>[INST] <<SYS>>
+  const prompt = `[INST] <<SYS>>
 ${system_prompt}
 <</SYS>>
 
@@ -158,12 +158,12 @@ ${messages
           if (i === 1) {
             return e.content + ' [/INST]\n'
           } else {
-            return '<s>[INST] ' + e.content + ' [/INST]\n'
+            return '[INST] ' + e.content + ' [/INST]\n'
           }
         } else if (e.role === 'system') {
           return null
         } else {
-          return ' ' + e.content.trim() + '</s>\n'
+          return ' ' + e.content.trim() + '\n'
         }
       })
       .filter(e => e)

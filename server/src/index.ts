@@ -72,16 +72,22 @@ wss.on('connection', function connection(ws) {
 
     if (message.type === 'goal') {
       runner.goal = message.content
-      await runner.generateInitialPlan()
+      await runner.handleNewUserMessage({
+        role: 'user',
+        content: message.content
+      })
     } else if (message.type === 'approval') {
-      runner.approveCodeBlock()
+      runner.handleApprovedCode()
     } else if (message.type === 'chat') {
       if (!runner.chat_id) {
         runner = new Runner()
         runner.broadcast()
       }
 
-      runner.userResponse(message.content)
+      runner.handleNewUserMessage({
+        role: 'user',
+        content: message.content
+      })
     } else if (message.type === 'new-chat') {
       runner = new Runner()
       runner.broadcast()

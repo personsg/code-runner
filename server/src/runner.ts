@@ -6,6 +6,7 @@ import { extractCode, llm, getSystemPrompt } from './llm/llm'
 import LTM, { Memory } from './memory/ltm'
 import * as crypto from 'crypto'
 import * as path from 'path'
+import { executeWorkflow, handleApprovedCode } from './workflows/runnerWorkflow'
 require('dotenv').config()
 
 const default_config: Config = {
@@ -72,64 +73,6 @@ export class Runner {
     this.broadcast()
   }
 
-  public async approveCodeBlock() {
-    const lastBlock = this.blocks[this.blocks.length - 1]
-    const codeBlock = this.blocks[this.blocks.length - 2]
-    if (lastBlock.type === 'approval' && codeBlock.type === 'function_call') {
-      lastBlock.status = 'approved'
-      clientSocket.send(
-        JSON.stringify({
-          type: 'blocks',
-          blocks: this.blocks,
-        }),
-      )
-
-      try {
-        const result = await this.repl.run(codeBlock.function_args.code)
-        const res = result.result
-
-        this.blocks.push({
-          type: 'function_return',
-          content: String(res),
-        })
-        this.messages.push({
-          role: 'function',
-          name: 'run_code',
-          content: String(res) === '' ? 'No Output' : String(res),
-        })
-        this.save()
-
-        clientSocket.send(
-          JSON.stringify({
-            type: 'blocks',
-            blocks: this.blocks,
-          }),
-        )
-        this.loop()
-      } catch (e) {
-        console.error(e)
-      }
-    }
-  }
-
-  public userResponse(message: string) {
-    this.messages.push({
-      role: 'user',
-      content: message,
-    })
-    this.blocks.push({
-      type: 'user',
-      content: message,
-    })
-    // this.memory.addMemory({
-    //   type: 'conversation',
-    //   source: 'user',
-    //   content: message,
-    // })
-    this.save()
-    this.loop()
-  }
-
   public addMultiModalBlock(message: string) {
     this.messages.push({
       role: 'user',
@@ -145,161 +88,69 @@ export class Runner {
     this.broadcast()
   }
 
-  public async loop() {
-    const lastMessage = this.messages[this.messages.length - 1]
-
-    if (lastMessage.role === 'user') {
-      // const memories = await this.memory.searchMemory(lastMessage.content)
-
-      // const augmentedLastMessage = memories.length > 0 ? {
-      //   ...lastMessage,
-      //   content: `You recall the below memories from your past conversations:\n
-      //   ${memories.map((m) => m.content).join('\n')}
-
-      //   ${lastMessage.content}`
-      // } : lastMessage
-
-      // const conversation = [...this.messages.slice(0, this.messages.length - 1), augmentedLastMessage]
-
-      const response = await llm(this.messages, this.config, clientSocket)
-
-      // this.blocks.push({
-      //   type: 'memory',
-      //   content: memories
-      // })
-
-      this.messages.push(response)
-      // this.memory.addMemory({
-      //   type: 'conversation',
-      //   source: 'agent',
-      //   content: response.content,
-      // })
-
-      if (response.content) {
-        this.blocks.push({
-          type: 'assistant',
-          content: response.content,
-        })
-      }
-
-      if (response.function_call) {
-        this.blocks.push({
-          type: 'function_call',
-          function_name: response.function_call.name,
-          function_args: {
-            language: 'javascript',
-            code: extractCode(response.function_call.arguments, this.config),
+  public async handleNewUserMessage(message: Message) {
+    executeWorkflow({
+      clientSocket,
+    },
+      {
+        llmConfig: this.config,
+        systemPrompt: getSystemPrompt(this.config),
+        messageLog: {
+          addMessage: (message: Message) => this.messages.push(message),
+          getMessages: () => this.messages
+        },
+        blockLog: {
+          addBlock: (block: Block) => {
+            this.blocks.push(block)
+            clientSocket.send(
+              JSON.stringify({
+                type: 'blocks',
+                blocks: this.blocks,
+              }),
+            )
           },
-        })
-        this.blocks.push({
-          type: 'approval',
-          content: 'Do you want to run this code?',
-          status: 'new',
-        })
-      }
-
-      clientSocket.send(
-        JSON.stringify({
-          type: 'blocks',
-          blocks: this.blocks,
-        }),
-      )
-      this.save()
-      return this.loop()
-    }
-
-    if (lastMessage.role === 'function') {
-      const responseRaw = await llm(this.messages, this.config, clientSocket)
-
-      let response = responseRaw
-
-      if (response.content) {
-        this.blocks.push({
-          type: 'assistant',
-          content: response.content,
-        })
-        this.messages.push(responseRaw)
-      }
-
-      if (response.function_call) {
-        this.blocks.push({
-          type: 'function_call',
-          function_name: response.function_call.name,
-          function_args: {
-            language: 'javascript',
-            code: extractCode(response.function_call.arguments, this.config),
-          },
-        })
-        this.blocks.push({
-          type: 'approval',
-          content: 'Do you want to run this code?',
-          status: 'new',
-        })
-      }
-
-      this.save()
-      clientSocket.send(
-        JSON.stringify({
-          type: 'blocks',
-          blocks: this.blocks,
-        }),
-      )
-      return
-    }
+          getBlocks: () => this.blocks
+        },
+        repl: this.repl,
+        system: {
+          save: () => this.save()
+        }
+      },
+      message)
+    this.save()
+    this.broadcast()
   }
 
-  public async generateInitialPlan() {
-    const messages: Message[] = [
+  public async handleApprovedCode() {
+    handleApprovedCode(
       {
-        role: 'system',
-        content: getSystemPrompt(this.config),
+        clientSocket,
       },
       {
-        role: 'user',
-        content: this.goal,
-      },
-    ]
-
-    this.messages = messages
-
-    const response = await llm(messages, this.config, clientSocket)
-
-    if (response.content) {
-      this.blocks.push({
-        type: 'assistant',
-        content: response.content,
-      })
-      this.messages.push(response)
-      // this.memory.addMemory({
-      //   type: 'conversation',
-      //   source: 'agent',
-      //   content: response.content,
-      // })
-    }
-
-    if (response.function_call) {
-      this.blocks.push({
-        type: 'function_call',
-        function_name: response.function_call.name,
-        function_args: {
-          language: 'javascript',
-          code: extractCode(response.function_call.arguments, this.config),
+        llmConfig: this.config,
+        systemPrompt: getSystemPrompt(this.config),
+        messageLog: {
+          addMessage: (message: Message) => this.messages.push(message),
+          getMessages: () => this.messages
         },
-      })
-      this.blocks.push({
-        type: 'approval',
-        content: 'Do you want to run this code?',
-        status: 'new',
-      })
-    }
-
-    clientSocket.send(
-      JSON.stringify({
-        type: 'blocks',
-        blocks: this.blocks,
-      }),
+        blockLog: {
+          addBlock: (block: Block) => {
+            this.blocks.push(block)
+            clientSocket.send(
+              JSON.stringify({
+                type: 'blocks',
+                blocks: this.blocks,
+              }),
+            )
+          },
+          getBlocks: () => this.blocks
+        },
+        repl: this.repl,
+        system: {
+          save: () => this.save()
+        }
+      }
     )
-    this.save()
   }
 
   public get goal(): string {
