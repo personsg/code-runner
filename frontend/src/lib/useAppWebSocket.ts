@@ -3,7 +3,7 @@ import { Block, Config } from '../../../server/src/runner';
 import { useWebSocket } from './useWebSocket';
 import { useChat } from './useChat';
 
-export const useAppWebSocket = () => {
+export const useAppWebSocket = ({ onNewStreamChunk }: { onNewStreamChunk: () => void }) => {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamParts, setStreamParts] = useState<any[]>([]);
@@ -40,6 +40,9 @@ export const useAppWebSocket = () => {
       }
       if (data.type === 'part') {
         setStreamParts(prev => [...prev, data.part])
+        if (!!onNewStreamChunk && typeof onNewStreamChunk === 'function') {
+          onNewStreamChunk()
+        }
       }
       if (data.type === 'list-chats') {
         setChats(data.content)

@@ -10,6 +10,13 @@ import { RootState } from './lib/store'
 import { ImageUploader } from './components/ImageUploader'
 
 function App() {
+  const onNewStreamChunk = () => {
+    const scrollMarker = document.getElementById('scroll-marker')
+    if (scrollMarker) {
+      scrollMarker.scrollIntoView({ behavior: 'auto' })
+    }
+  }
+
   const appState = useSelector((state: RootState) => state.appState);
   const {
     blocks,
@@ -19,8 +26,8 @@ function App() {
     config,
     resetState,
     isStreaming,
-    streamParts
-  } = useAppWebSocket();
+    streamParts,
+  } = useAppWebSocket({ onNewStreamChunk });
 
   const [chatMessage, setChatMessage] = useState('')
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -134,6 +141,7 @@ function App() {
                     </Markdown>
                   </Box>
                 )}
+              <div id="scroll-marker"></div>
             </>
           )}
         </Box>
