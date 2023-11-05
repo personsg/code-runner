@@ -101,21 +101,26 @@ async function post(prompt: string, config: Config, clientSocket?: WebSocket): P
 
     const req = http.request(options, res => {
       res.on('data', chunk => {
-        const content = JSON.parse(chunk.toString()).response
-        parts.push(content)
+        try {
+          const content = JSON.parse(chunk.toString()).response
+          parts.push(content)
 
-        // TODO: if inside code block, add to function_call/arguments
-        if (clientSocket) {
-          try {
-            clientSocket.send(
-              JSON.stringify({
-                type: 'part',
-                part: {
-                  choices: [{ delta: { content } }]
-                }
-              }),
-            )
-          } catch { }
+          // TODO: if inside code block, add to function_call/arguments
+          if (clientSocket) {
+            try {
+              clientSocket.send(
+                JSON.stringify({
+                  type: 'part',
+                  part: {
+                    choices: [{ delta: { content } }]
+                  }
+                }),
+              )
+            } catch { }
+          }
+        }
+        catch {
+          console.error('bad chunk: ', chunk.toString())
         }
       })
 
