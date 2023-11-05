@@ -4,8 +4,6 @@ import { useWebSocket } from './useWebSocket';
 import { useChat } from './useChat';
 
 export const useAppWebSocket = () => {
-  const [goal, setGoal] = useState('');
-  const [goalSent, setGoalSent] = useState(false);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamParts, setStreamParts] = useState<any[]>([]);
@@ -14,8 +12,6 @@ export const useAppWebSocket = () => {
   const [config, setConfig] = useState<Config | null>(null)
 
   const resetState = () => {
-    setGoal('')
-    setGoalSent(false)
     setBlocks([])
     setIsStreaming(false)
     setStreamParts([])
@@ -30,10 +26,6 @@ export const useAppWebSocket = () => {
 
     socket.onmessage = event => {
       const data = JSON.parse(event.data);
-      if (data.type === 'goal') {
-        setGoal(data.content)
-        setGoalSent(true)
-      }
       if (data.type === 'blocks') {
         setBlocks(data.blocks)
         // @ts-ignore for debug
@@ -68,10 +60,6 @@ export const useAppWebSocket = () => {
   }, [socket]);
 
   return {
-    goal,
-    setGoal,
-    goalSent,
-    setGoalSent,
     blocks,
     setBlocks,
     isStreaming,

@@ -5,7 +5,6 @@ import Blocks from './components/Blocks'
 import { Block } from '../../server/src/runner'
 import ChatDrawer from './components/ChatDrawer'
 import { useAppWebSocket } from './lib/useAppWebSocket'
-import { Goal } from './components/Goal'
 import { useSelector } from 'react-redux'
 import { RootState } from './lib/store'
 import { ImageUploader } from './components/ImageUploader'
@@ -13,10 +12,6 @@ import { ImageUploader } from './components/ImageUploader'
 function App() {
   const appState = useSelector((state: RootState) => state.appState);
   const {
-    goal,
-    setGoal,
-    goalSent,
-    setGoalSent,
     blocks,
     setBlocks,
     socket,
@@ -45,11 +40,6 @@ function App() {
       }
       socket.send(JSON.stringify(payload))
     }
-  }
-
-  const sendGoal = (message: string) => {
-    sendPayload('goal', message);
-    setGoalSent(true);
   }
 
   const sendChatMessage = () => {
@@ -119,17 +109,9 @@ function App() {
           />
         </Stack>
       </Box>
-      <Goal
-        goal={goal}
-        setGoal={setGoal}
-        goalSent={goalSent}
-        sendGoal={sendGoal}
-      />
-      {goalSent && (
-        <Button sx={{ marginLeft: '10px', position: 'absolute', right: '16px', top: '16px' }} variant='contained' onClick={() => newChat()}>
-          New
-        </Button>
-      )}
+      <Button sx={{ marginLeft: '10px', position: 'absolute', right: '16px', top: '16px' }} variant='contained' onClick={() => newChat()}>
+        New
+      </Button>
       <Box sx={{ maxWidth: '800px', margin: '0 auto', marginTop: '80px' }}>
         {socket && <Blocks blocks={blocks} socket={socket} />}
         <Box>
@@ -158,7 +140,7 @@ function App() {
         <Box sx={{ height: '80px' }}></Box>
       </Box>
       {
-        goalSent && (
+        (
           <Box
             sx={{
               position: 'fixed',

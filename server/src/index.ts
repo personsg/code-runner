@@ -73,13 +73,7 @@ wss.on('connection', function connection(ws) {
   ws.on('message', async function message(data: string) {
     const message = JSON.parse(data)
 
-    if (message.type === 'goal') {
-      runner.goal = message.content
-      await runner.handleNewUserMessage({
-        role: 'user',
-        content: message.content
-      })
-    } else if (message.type === 'approval') {
+    if (message.type === 'approval') {
       runner.handleApprovedCode()
     } else if (message.type === 'chat') {
       if (!runner.chat_id) {

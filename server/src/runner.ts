@@ -16,7 +16,6 @@ const default_config: Config = {
 }
 
 export class Runner {
-  private _goal: string = ''
   public messages: Message[] = []
   public repl: Execute
   public blocks: Block[] = []
@@ -53,7 +52,6 @@ export class Runner {
       fs.mkdirSync(dp, { recursive: true })
     }
 
-    fs.writeFileSync(`${dp}/goal.txt`, this.goal)
     fs.writeFileSync(`${dp}/blocks.json`, JSON.stringify(this.blocks))
     fs.writeFileSync(`${dp}/messages.json`, JSON.stringify(this.messages))
     fs.writeFileSync(`${dp}/config.json`, JSON.stringify(this.config))
@@ -63,8 +61,7 @@ export class Runner {
     this.chat_id = chat_id
     const dp = path.join(STATE_PATH, chat_id)
     console.log(dp)
-    if (fs.existsSync(dp + '/goal.txt')) {
-      this.goal = fs.readFileSync(`${dp}/goal.txt`, 'utf8')
+    if (fs.existsSync(dp + '/config.json')) {
       this.blocks = JSON.parse(fs.readFileSync(`${dp}/blocks.json`, 'utf8'))
       this.messages = JSON.parse(fs.readFileSync(`${dp}/messages.json`, 'utf8'))
       this.config = JSON.parse(fs.readFileSync(`${dp}/config.json`, 'utf8'))
@@ -155,19 +152,6 @@ export class Runner {
     )
   }
 
-  public get goal(): string {
-    return this._goal
-  }
-
-  public set goal(value: string) {
-    this._goal = value
-
-    this.blocks.push({
-      type: 'goal',
-      content: value,
-    })
-  }
-
   public broadcast() {
     clientSocket.send(
       JSON.stringify({
@@ -186,14 +170,6 @@ export class Runner {
         content: this.config,
       }),
     )
-    if (this.goal.length > 0) {
-      clientSocket.send(
-        JSON.stringify({
-          type: 'goal',
-          content: this.goal,
-        }),
-      )
-    }
   }
 
   public setWorkflow(workflow_name: string) {
@@ -237,11 +213,6 @@ export class Runner {
 
 export type Message = ChatCompletionMessageParam
 
-type BlockGoal = {
-  type: 'goal'
-  content: string
-}
-
 type BlockUser = {
   type: 'user'
   content: string
@@ -282,7 +253,6 @@ export type Block =
   | BlockAssistant
   | BlockFunctionCall
   | BlockApproval
-  | BlockGoal
   | BlockFunctionReturn
   | BlockMemory
 

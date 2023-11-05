@@ -5,9 +5,7 @@ import { Button, Box, Typography, ImageList, ImageListItem } from '@mui/material
 
 function Blocks({ blocks, socket }: { blocks: Block[]; socket: WebSocket }) {
   return blocks.map((e, i) => {
-    if (e.type === 'goal') {
-      return null
-    } else if (e.type === 'assistant') {
+    if (e.type === 'assistant') {
       return (
         <Box marginBottom={2} sx={{ width: '100%', backgroundColor: '#333' }}>
           <Markdown>{e.content}</Markdown>
