@@ -8,6 +8,7 @@ import { useAppWebSocket } from './lib/useAppWebSocket'
 import { useSelector } from 'react-redux'
 import { RootState } from './lib/store'
 import { ImageUploader } from './components/ImageUploader'
+import FileUploader from './components/FileUploader'
 
 function App() {
   const onNewStreamChunk = () => {
@@ -97,6 +98,7 @@ function App() {
           >
             <MenuItem value='code-runner'>Code Runner</MenuItem>
             <MenuItem value='chat'>Chat</MenuItem>
+            <MenuItem value='knowledge'>Knowledge</MenuItem>
           </Select>
           <Select
             sx={{ marginLeft: '10px' }}
@@ -107,6 +109,7 @@ function App() {
               <MenuItem key={e.name} value={e.name}>{e.name}</MenuItem>
             ))}
           </Select>
+          <FileUploader />
           <ChatDrawer
             chats={chats}
             switchChat={switchChat}

@@ -12,10 +12,10 @@ import WorkflowList from './workflows'
 export const EXECUTION_PATH = path.join(__dirname, '../../workspaces')
 export const STATE_PATH = path.join(__dirname, '../../state')
 export const MEMORY_PATH = path.join(__dirname, '../../state/runner1/memory.db')
+export const KNOWLEDGE_PATH = path.join(__dirname, '../../state/runner1/knowledgedb')
 export const GLOBAL_CONFIG_PATH = path.join(__dirname, '../../config/config.json')
 
-const workflows = WorkflowList
-
+fs.mkdirSync(KNOWLEDGE_PATH, { recursive: true })
 fs.mkdirSync(path.join(__dirname, '../../config'), { recursive: true })
 
 let runner = new Runner()
@@ -54,6 +54,13 @@ app.get('/models', async (req, res) => {
   const models = await getAvailableModels()
 
   res.send(models)
+})
+
+app.post('/knowledge/add-file', upload.single('file'), async (req, res) => {
+  const file = req.file.path
+  await runner.knowledgeFiles.addFile(file)
+
+  res.send('File uploaded successfully.');
 })
 
 app.listen(8081, () => {

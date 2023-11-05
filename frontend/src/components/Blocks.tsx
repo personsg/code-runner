@@ -2,8 +2,11 @@ import Markdown from 'markdown-to-jsx'
 import Code from './Code'
 import { Block } from '../../../server/src/runner'
 import { Button, Box, Typography, ImageList, ImageListItem } from '@mui/material'
+import { useState } from 'react';
 
 function Blocks({ blocks, socket }: { blocks: Block[]; socket: WebSocket }) {
+  const [collapse, setCollapse] = useState(false)
+
   return blocks.map((e, i) => {
     if (e.type === 'assistant') {
       return (
@@ -11,7 +14,17 @@ function Blocks({ blocks, socket }: { blocks: Block[]; socket: WebSocket }) {
           <Markdown>{e.content}</Markdown>
         </Box>
       )
-    } else if (e.type === 'function_call') {
+    } else if (e.type === "context") {
+      return (
+        <Box marginBottom={2} sx={{ backgroundColor: '#00008b' }}>
+          <Button onClick={() => setCollapse(!collapse)}>
+            {collapse ? 'Show Content' : 'Hide Content'}
+          </Button>
+          {collapse && <Markdown>{e.content}</Markdown>}
+        </Box>
+      )
+    }
+    else if (e.type === 'function_call') {
       return (
         <Box marginBottom={2}>
           <Code code={e.function_args.code} />

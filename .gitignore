@@ -7,3 +7,4 @@ server/uploads/
 server/output.txt
 /config/
 ee/
+qdrant/

@@ -7,6 +7,7 @@ import LTM, { Memory } from './memory/ltm'
 import * as crypto from 'crypto'
 import * as path from 'path'
 import { trigger_UserMessage, trigger_CodeApprovalButton } from './workflows/runnerWorkflow'
+import { KnowledgeFiles } from './memory/KnowledgeFiles'
 require('dotenv').config()
 
 const default_config: Config = {
@@ -22,11 +23,12 @@ export class Runner {
   private config: Config
   public memory: LTM
   public chat_id: string
+  public knowledgeFiles: KnowledgeFiles
 
   constructor(chat_id?: string) {
     this.repl = new Execute()
     this.memory = new LTM()
-
+    this.knowledgeFiles = new KnowledgeFiles()
 
     if (fs.existsSync(GLOBAL_CONFIG_PATH)) {
       this.config = JSON.parse(fs.readFileSync(GLOBAL_CONFIG_PATH, 'utf8'))
@@ -248,6 +250,11 @@ type BlockMemory = {
   content: Memory[]
 }
 
+type BlockContext = {
+  type: 'context',
+  content: string
+}
+
 export type Block =
   | BlockUser
   | BlockAssistant
@@ -255,6 +262,7 @@ export type Block =
   | BlockApproval
   | BlockFunctionReturn
   | BlockMemory
+  | BlockContext
 
 export type Config = {
   family: "local" | "openai"
