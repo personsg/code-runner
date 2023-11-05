@@ -1,10 +1,11 @@
 import chalk = require("chalk");
 import { Message } from "../runner";
 
-const orca_style = ["mistral-openorca"]
+const orca_style = ["mistral-openorca", "dolphin"]
 
 export function buildPrompt(messages: Message[], systemMessage: Message, model: string) {
   if (orca_style.some(e => model.startsWith(e))) {
+    console.log('using orca style')
     return buildPromptOrcaStyle(messages, systemMessage)
   }
   else {
@@ -14,7 +15,8 @@ export function buildPrompt(messages: Message[], systemMessage: Message, model: 
 
 export function buildPromptOrcaStyle(messages: Message[], systemMessage: Message) {
   console.log(chalk.blue("buildPromptOrcaStyle"))
-  const prompt = `<|im_start|>system ${systemMessage.content}<|im_end|>
+  const prompt = `<|im_start|>system
+${systemMessage.content}<|im_end|>
 
 ${messages.map(e => {
     if (e.role === 'user' || e.role === "function") {
