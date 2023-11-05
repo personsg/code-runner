@@ -29,7 +29,8 @@ ${e.content}<|im_end|>`
     }
   }).join('\n')}
 
-<|im_start|>assistant`
+<|im_start|>assistant
+`
 
   console.log(chalk.blue(prompt))
   return prompt
