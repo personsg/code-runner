@@ -6,6 +6,9 @@ import { extractCode as extractCode2 } from './openai'
 import chalk = require('chalk')
 import { getSystemPrompt } from './llm'
 import { buildPrompt } from './ollamaBuildPrompt'
+require('dotenv').config()
+
+const OLLAMA_HOSTNAME = process.env.OLLAMA_HOSTNAME || 'localhost'
 
 export async function llm(
   inputMessages: Message[],
@@ -42,7 +45,7 @@ export async function llm(
 export async function getAvailableModels() {
   return new Promise<{ name: string }[]>((resolve, reject) => {
     const options = {
-      hostname: 'localhost',
+      hostname: OLLAMA_HOSTNAME,
       port: 11434,
       path: '/api/tags',
       method: 'GET',
@@ -76,7 +79,7 @@ async function post(prompt: string, config: Config, clientSocket?: WebSocket): P
     })
 
     const options = {
-      hostname: 'localhost',
+      hostname: OLLAMA_HOSTNAME,
       port: 11434,
       path: '/api/generate',
       method: 'POST',
