@@ -1,4 +1,4 @@
-import { Drawer, List, ListItem, ListItemText, Button, Switch, FormControlLabel, Typography } from "@mui/material";
+import { Drawer, List, ListItem, ListItemText, Button, Switch, FormControlLabel, Typography, Box } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { Dispatch, RootState } from "../lib/store";
 
@@ -19,38 +19,46 @@ const ChatDrawer: React.FC<{ chats: string[], switchChat: (id: string) => void, 
 
   return (
     <Drawer anchor='left' open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-      <List
+      <Box
         sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          height: '100%',
           minWidth: '300px',
         }}
       >
-        {chats.map((chat, index) => (
-          <ListItem key={index}>
-            <ListItemText primary={chat} onClick={() => switchChat(chat)} />
-            <Button onClick={() => deleteChat(chat)}>X</Button>
+        <List
+          sx={{
+            minWidth: '200px',
+          }}
+        >
+          {chats.map((chat, index) => (
+            <ListItem key={index}>
+              <ListItemText primary={chat} onClick={() => switchChat(chat)} />
+              <Button onClick={() => deleteChat(chat)}>X</Button>
+            </ListItem>
+          ))}
+        </List>
+        <List
+          sx={{
+            width: '200px',
+          }}
+        >
+          <ListItem>
+            <ListItemText primary="Experimental Features" />
           </ListItem>
-        ))}
-      </List>
-      <List
-        sx={{
-          position: 'absolute',
-          bottom: 0,
-          width: '100%',
-        }}
-      >
-        <ListItem>
-          <ListItemText primary="Experimental Features" />
-        </ListItem>
-        <ListItem>
-          <FormControlLabel
-            control={<Switch checked={isLlavaEnabled} onChange={handleLlavaToggle} />}
-            label="Enable LLAVA"
-          />
-          <Typography variant='caption'>
-            Note: you'll need to have configured LLAVA_PATH and LLAVA_MODEL_PATH in your .env file.
-          </Typography>
-        </ListItem>
-      </List>
+          <ListItem>
+            <FormControlLabel
+              control={<Switch checked={isLlavaEnabled} onChange={handleLlavaToggle} />}
+              label="Enable LLAVA"
+            />
+            <Typography variant='caption'>
+              Note: you'll need to have configured LLAVA_PATH and LLAVA_MODEL_PATH in your .env file.
+            </Typography>
+          </ListItem>
+        </List>
+      </Box>
     </Drawer>
   );
 };
